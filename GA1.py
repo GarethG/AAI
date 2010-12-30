@@ -4,6 +4,7 @@
 
 #first import the required python packages, mostly from numpy I think
 import numpy #can be used with matlab?
+import numpy.random
 import random
 import sys
 
@@ -11,9 +12,12 @@ numpy.set_printoptions(threshold=sys.maxint) #numpy likes to print large arrays 
 
 
 #specify the population size and the genome size - do this later with raw_input
-pop = 50 #population
-gen = 10 #number of bits or genome size
+pop = 5 #population
+gen = 5 #number of bits or genome size
 fitval = []
+totfit = 0 #total fitness used in roulette wheel selection
+a = 0
+b= 0
 
 def pop_array(rows, cols):
 
@@ -35,12 +39,22 @@ def pop_array(rows, cols):
 
 a = pop_array(pop,gen)# function call to create an array and populate it
 b = numpy.array(a) #convert the python list array to a numpy array - probably just for printing
-c = fitval.index(10) + 1 #zero referenced
-
+totfit = b.sum() # total fitness of the population
 
 print "Initial Population created"
 print b
-print fitval
-print "the index of 10 fitval genes", c
 
+
+#print b[49,:] how to print one line of an array
+#sum the indexed array element
+print "the total fitness of the population is = ",totfit
+
+row =0
+
+for row in b:
+	#numpy.append(fitarr, b[1,row].sum())
+	print "in ", row, " the fitness is ",b[1,row]
+
+	
+	
 
