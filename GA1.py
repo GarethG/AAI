@@ -46,7 +46,7 @@ totfit = b.sum() # total fitness of the population
 
 pp.pprint(a)
 
-print a[0,0]
+print a[0],[0]
 
 print "Initial Population created"
 print b
