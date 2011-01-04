@@ -22,6 +22,7 @@ pop = 10 #population
 gen = 10 #number of bits or genome size
 fitval = []
 totfit = 0 #total fitness used in roulette wheel selection
+meanfit = 0
 a = 0
 b= 0
 
@@ -44,6 +45,12 @@ def write_bestfit(topfit):
 	bf.write(bfval)
 	bf.write('\n')	
 
+def write_meanfit(fitnessval):
+	#write mean fitness of current population to file
+	meanfit = sum(fitnessval, 0.0) / len(fitnessval)
+	mfval = str(meanfit)
+	mf.write(mfval)
+	mf.write('\n')	
 
 a = pop_array(pop,gen)# function call to create an array and populate it
 b = numpy.array(a) #convert the python list array to a numpy array - probably just for printing
@@ -65,7 +72,8 @@ for row in a:
 
 totfit = sum(fitval) #find the total fitness of the population
 topfit = max(fitval) #find the highest fitness in the fitness list
-write_bestfit(topfit)
+write_bestfit(topfit) #write the highest fitness found to file
+write_meanfit(fitval) #write the mean fitness of the current population to a file
 topfitx = fitval.count(topfit) #take the highest fitness value and count the number of times it appears in the list
 randfit = random.randint(0 , totfit) #choose a random fitness between 0 and the fitness of the population
 randparents = []
@@ -98,10 +106,7 @@ print "-----------------------------------------------------------------"
 
 print "the random parents are", randparents
 
-#write best fitness of current population to file
-bfval = str(topfit)
-bf.write(bfval)
-bf.write('\n')
+
 #End of Line
 bf.close() #close these files
 mf.close()
