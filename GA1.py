@@ -12,10 +12,14 @@ import pprint as pp
 
 numpy.set_printoptions(threshold=sys.maxint) #numpy likes to print large arrays wierd, supress this
 
+#+++++++++++++++++++++File input args+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+
+bf = open('./data/bestfit.txt','a') #opens bestfit file, arg 'a' opens the file for appending data
+mf = open('./data/meanfit.txt','a')
 
 #specify the population size and the genome size - do this later with raw_input
-pop = 5 #population
-gen = 5 #number of bits or genome size
+pop = 10 #population
+gen = 10 #number of bits or genome size
 fitval = []
 totfit = 0 #total fitness used in roulette wheel selection
 a = 0
@@ -23,43 +27,89 @@ b= 0
 
 def pop_array(rows, cols):
 
-	seq = [int(i) for i in range(int(0), int(2))]
 	matrix = []
 
 	for row in range(rows):
 		array = []
 		for col in range(cols):
-			array.append(random.choice(seq))	
+			array.append(random.randint(0,1))	
 		matrix.append(array)
-		fit = array.count(1)
-		fitval.append(fit)
 		
 		
 	return matrix
 	
-	
+def write_bestfit(topfit):
+	#write best fitness of current population to file
+	bfval = str(topfit)
+	bf.write(bfval)
+	bf.write('\n')	
+
 
 a = pop_array(pop,gen)# function call to create an array and populate it
 b = numpy.array(a) #convert the python list array to a numpy array - probably just for printing
-totfit = b.sum() # total fitness of the population
-
-
-pp.pprint(a)
-
-print a[0],[0]
+print  b.sum() # total fitness of the population
 
 print "Initial Population created"
-print b
 
+#print a
+pp.pprint(a)
+
+#print a[0],[0]
+#print a[1],[1]
+#j = a[0].count(1)
+#print j
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#					FITNESS CALCULATIONS
+for row in a:
+	fitval.append(row.count(1))
+
+totfit = sum(fitval) #find the total fitness of the population
+topfit = max(fitval) #find the highest fitness in the fitness list
+write_bestfit(topfit)
+topfitx = fitval.count(topfit) #take the highest fitness value and count the number of times it appears in the list
+randfit = random.randint(0 , totfit) #choose a random fitness between 0 and the fitness of the population
+randparents = []
+
+resum = 0
+for row in a:
+	resum = resum + row.count(1)
+	if resum > randfit:
+		print "randfit reached"
+		randparents = row 
+		break
+
+print "fitness of all genes ",fitval 
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+print "the total fitness of the population is = ",totfit
+print "the highest fitness of ", topfit, " Occurs ", topfitx, " times"
+
+
+print "-----------------------------------------------------------------"
+print"-								-"
+print "- Total fitness of the population = ", totfit, "			-"
+print "-								-"
+print "- A random number between 0 and total fitness = ", randfit, "		-"	
+print "-								-"
+print "- 								-"
+print "-----------------------------------------------------------------"
+
+
+print "the random parents are", randparents
+
+#write best fitness of current population to file
+bfval = str(topfit)
+bf.write(bfval)
+bf.write('\n')
+#End of Line
+bf.close() #close these files
+mf.close()
 
 #print b[49,:] how to print one line of an array
 #sum the indexed array element
-print "the total fitness of the population is = ",totfit
 
-print "array element 0,0 is ", b[0,0]
 
-y = b[0,:]
-print y
 
 #for row in b:
 #	for col in b:
