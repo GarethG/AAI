@@ -75,15 +75,23 @@ topfit = max(fitval) #find the highest fitness in the fitness list
 write_bestfit(topfit) #write the highest fitness found to file
 write_meanfit(fitval) #write the mean fitness of the current population to a file
 topfitx = fitval.count(topfit) #take the highest fitness value and count the number of times it appears in the list
+
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#					ROULETTE WHEEL SELECTION
+
 randfit = random.randint(0 , totfit) #choose a random fitness between 0 and the fitness of the population
 randparents = []
+randind = 0
 
 resum = 0
 for row in a:
+	randind = randind + 1 # find the index of the element where you stop
 	resum = resum + row.count(1)
 	if resum > randfit:
 		print "randfit reached"
 		randparents = row 
+		
 		break
 
 print "fitness of all genes ",fitval 
@@ -95,7 +103,8 @@ print "the highest fitness of ", topfit, " Occurs ", topfitx, " times"
 
 
 print "-----------------------------------------------------------------"
-print"-								-"
+print"-		Roulette Wheel Selection Stuff			-"
+print "- 								-"
 print "- Total fitness of the population = ", totfit, "			-"
 print "-								-"
 print "- A random number between 0 and total fitness = ", randfit, "		-"	
@@ -105,6 +114,7 @@ print "-----------------------------------------------------------------"
 
 
 print "the random parents are", randparents
+print "the index of that parent is ", randind
 
 
 #End of Line
