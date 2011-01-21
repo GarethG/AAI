@@ -60,7 +60,8 @@ def write_meanfit(fitnessval):
 ################################################################
 
 #####################################################################################################################
-def roulette(totfit, randparent, randfit):
+
+def roulette(totfit):
 	randfit = random.randint(0 , totfit) #choose a random fitness between 0 and the fitness of the population
 	randparent = []
 	randind = 0
@@ -75,7 +76,7 @@ def roulette(totfit, randparent, randfit):
 		 
 			break
 	print "randfit, randparent and totfit are in function = ", randfit, randparent, totfit
-	return totfit, randparent, randfit
+	return randparent, randfit, randind
 	print "fitness of all genes ",fitval 
 	print "ENTERED"
 #####################################################################################################################
@@ -109,9 +110,13 @@ topfitx = fitval.count(topfit) #take the highest fitness value and count the num
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #					ROULETTE WHEEL SELECTION
 print "calling roulette wheel selection"
-print "randfit, randparent and totfit currently are ", randfit, randparent, totfit
-roulette(totfit, randparent, randfit)
-print "randfit, randparent and totfit are now ", randfit, randparent, totfit
+r = roulette(totfit)
+randparent = r[0]
+randfit = r[1]
+randind = r[2]
+#now need to create a new array of new parents
+
+
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 print "the total fitness of the population is = ",totfit
