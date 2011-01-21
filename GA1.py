@@ -25,6 +25,10 @@ totfit = 0 #total fitness used in roulette wheel selection
 meanfit = 0
 a = 0
 b= 0
+randparent = []
+randind = 0
+randfit = 0
+
 
 def pop_array(rows, cols):
 
@@ -38,19 +42,44 @@ def pop_array(rows, cols):
 		
 		
 	return matrix
-	
+#################################################################	
 def write_bestfit(topfit):
 	#write best fitness of current population to file
 	bfval = str(topfit)
 	bf.write(bfval)
 	bf.write('\n')	
+#################################################################
 
+#################################################################
 def write_meanfit(fitnessval):
 	#write mean fitness of current population to file
 	meanfit = sum(fitnessval, 0.0) / len(fitnessval)
 	mfval = str(meanfit)
 	mf.write(mfval)
 	mf.write('\n')	
+################################################################
+
+#####################################################################################################################
+def roulette(totfit, randparent, randfit):
+	randfit = random.randint(0 , totfit) #choose a random fitness between 0 and the fitness of the population
+	randparent = []
+	randind = 0
+
+	resum = 0
+	for row in a:
+		randind = randind + 1 # find the index of the element where you stop
+		resum = resum + row.count(1)
+		if resum > randfit:
+			print "randfit reached"
+			randparent = row 
+		 
+			break
+	print "randfit, randparent and totfit are in function = ", randfit, randparent, totfit
+	return totfit, randparent, randfit
+	print "fitness of all genes ",fitval 
+	print "ENTERED"
+#####################################################################################################################
+
 
 a = pop_array(pop,gen)# function call to create an array and populate it
 b = numpy.array(a) #convert the python list array to a numpy array - probably just for printing
@@ -79,23 +108,10 @@ topfitx = fitval.count(topfit) #take the highest fitness value and count the num
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #					ROULETTE WHEEL SELECTION
-
-randfit = random.randint(0 , totfit) #choose a random fitness between 0 and the fitness of the population
-randparents = []
-randind = 0
-
-resum = 0
-for row in a:
-	randind = randind + 1 # find the index of the element where you stop
-	resum = resum + row.count(1)
-	if resum > randfit:
-		print "randfit reached"
-		randparents = row 
-		
-		break
-
-print "fitness of all genes ",fitval 
-
+print "calling roulette wheel selection"
+print "randfit, randparent and totfit currently are ", randfit, randparent, totfit
+roulette(totfit, randparent, randfit)
+print "randfit, randparent and totfit are now ", randfit, randparent, totfit
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 print "the total fitness of the population is = ",totfit
@@ -113,7 +129,7 @@ print "- 								-"
 print "-----------------------------------------------------------------"
 
 
-print "the random parents are", randparents
+print "the random parents are", randparent
 print "the index of that parent is ", randind
 
 
