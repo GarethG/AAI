@@ -29,7 +29,7 @@ randparent = []
 randind = 0
 randfit = 0
 
-
+##################################################################
 def pop_array(rows, cols):
 
 	matrix = []
@@ -71,11 +71,12 @@ def roulette(totfit):
 		randind = randind + 1 # find the index of the element where you stop
 		resum = resum + row.count(1)
 		if resum > randfit:
-			print "randfit reached"
+			#print "randfit reached"
 			randparent = row 
 		 
 			break
-	print "randfit, randparent and totfit are in function = ", randfit, randparent, totfit
+	#print "randfit, randparent and totfit are in function = ", randfit, randparent, totfit
+	print "the current random parent ", randparent
 	return randparent, randfit, randind
 	print "fitness of all genes ",fitval 
 	print "ENTERED"
@@ -110,11 +111,18 @@ topfitx = fitval.count(topfit) #take the highest fitness value and count the num
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #					ROULETTE WHEEL SELECTION
 print "calling roulette wheel selection"
-r = roulette(totfit)
-randparent = r[0]
-randfit = r[1]
-randind = r[2]
 #now need to create a new array of new parents
+newarr = []
+#########################Populate a new array containing parents from roulette wheel selection##################################
+for row in range(pop):
+	r = roulette(totfit)
+	if r == 0:
+		print "wahhhh roulette came up with a 0"
+	randparent = r[0]
+	randfit = r[1]
+	randind = r[2]
+	newarr.append(randparent)
+	#print "im in row ", row
 
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -137,6 +145,10 @@ print "-----------------------------------------------------------------"
 print "the random parents are", randparent
 print "the index of that parent is ", randind
 
+
+print "the new array after roulette wheel selection "
+
+pp.pprint(newarr)
 
 #End of Line
 bf.close() #close these files
