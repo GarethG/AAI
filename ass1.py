@@ -19,7 +19,7 @@ fitness = open('./data/fitness.txt','a') #opens bestfit file, arg 'a' opens the 
 #mf = open('./data/meanfit.txt','a')
 
 #+++++++++++++++++++++++GLOBAL++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-fsmtable = [] #Finite State Machine Table  
+#fsmtable = [] #Finite State Machine Table  
 
 #+++++++++++++++++++++MAZE+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 maze =  [
@@ -46,7 +46,11 @@ class robot:
 	sens = [0,0,0,0,0] #[left, leftd, fwd, rightd, right]
 	dsens = 0
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+#++++++++++++++++++++++++FINITE STATE MACHINE CLASS+++++++++++++++++++++++++++++++++++++++++++++++++++++
+class fsm:
+	table = []
+	action = 0
+	bintable = []
 #++++++++++++++++++++++init robot++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def robot_init():
 	robot.x = 1 # the row
@@ -280,10 +284,60 @@ def fsm_build_table():
 	pass
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def fsm_gen_actions():
+	table = []
 	for row in range(32): #32 because thats the maximum number of possible sensor readings
-		fsmtable.append(random.randint(0,3))#append random value at the end of fsmtable
-	return fsmtable
+		table.append(random.randint(0,3))#append random value at the end of fsmtable
+	fsm.table = table
+	
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#+++++++++++++++++STATE MACHINE ACTION SELECTOR++++++++++++++++++++++++++++++++++++++++++++
+def fsm_action():
+	if fsm.action == 0:
+		pass
+	if fsm.action == 1: #Turn Right
+		if robot.heading == 0: 		#Heading at North, make your heading East
+			robot.heading = 1	
+		elif robot.heading == 1: 		#heading at East, make your heading South						
+			robot.heading = 2 			
+		elif robot.heading == 2: 		#heading at South, make your heading West
+			robot.heading = 3
+		elif robot.heading == 3: 		#heading at West, make your heading North
+			robot.heading = 0			
+	if fsm.action == 2: #Turn Left
+		if robot.heading == 0: 		#Heading at North, make your heading West
+			robot.heading = 3
+		elif robot.heading == 1: 		#Heading at East, make your heading North
+			robot.heading = 0
+		elif robot.heading == 2: 		#Heading at South, make your heading East
+			robot.heading = 1
+		elif robot.heading == 3:		#Heading at West, make your heading South
+			robot.heading = 2
+	if fsm.action == 3: #Go Forward 
+		if robot.heading == 0: #heading north						
+			robot.x = robot.x - 1						     
+		elif robot.heading == 1: #heading east								
+			robot.y = robot.y + 1							
+		elif robot.heading == 2: #heading south							
+			robot.x = robot.x + 1									
+		elif robot.heading == 3: #heading west							
+			robot.y = robot.y - 1
+	robot_fitness()	
+	del_tile()#deletethe tile your on so you dont count its fitness more than once
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#+++++++++++++++++++++++CREATE BINARY LIST+++++++++++++++++++++++++++++++++++++++++++++++
+def fsm_create_binstr():
+	tab = []
+	bintab = []
+
+	for row in range(32):
+		tab = fsm.table[row]	
+		bintab.append(bin(tab)[2:].zfill(2))#zfill is 5 to pad out bit pattern
+		fsm.bintab = bintab
+	
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#++++++++++++++FSM SIMULATION+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def fsm_sim():
 	robot_init()
 	action = 0
@@ -291,18 +345,34 @@ def fsm_sim():
 		print"-------------------------------------------------------------------"
 		print "Iteration ", life
 		robot_getsensors(robot.x,robot.y,robot.heading)
-		action = fsmtable[robot.dsens]
+		fsm.action = fsm.table[robot.dsens]
+		fsm_action()
+		format_heading()
+		maze2 = copy.deepcopy(maze)
+		maze2[robot.x][robot.y] = robot.mhead
+		pp.pprint(maze2)
 		print "robot.dsens = ", robot.dsens
-		print "selected action ", action
-	print fsmtable
-def fsm_fitness():
-	pass
+		print "selected action ", fsm.action
+		print"-------------------------------------------------------------------"
+		time.sleep(0)#+++++++wait++++++++
+	
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-def fsm_create_binstr():
-	pass
 
 def fsm_evolution():
 	pass
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#+++++++++++++++++ALL FSM IN ONE FINAL CALL+++++++++++++++++++++++++++++++++++++++++++++
+def finite_state_machine():
+	fsm_gen_actions()	
+	fsm_sim()
+	fsm_create_binstr()
+	print fsm.table
+	print fsm.bintab
+	pyth
+	#print help(fsm.bintab)
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #---------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------
@@ -325,9 +395,8 @@ print nmaze
 
 robot_init() #initialise the robot
 #robot_linefollow()
+finite_state_machine()
 
-fsm_gen_actions()	
-fsm_sim()
 
 print "robot fitness", robot.fitness
 #filewrite_fitness()
