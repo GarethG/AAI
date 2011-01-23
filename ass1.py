@@ -10,6 +10,7 @@ import array
 import sys
 import pprint as pp
 import copy
+import time
 
 numpy.set_printoptions(threshold=sys.maxint) #numpy likes to print large arrays wierd, supress this
 
@@ -123,38 +124,53 @@ def line_follow():
 	if robot.y == 7:
 		robot.y = 0	
 
-	if robot.sens[0] == 1:
-		robot.heading = robot.heading - 1	#Turn Left
-	elif robot.sens[2] == 1:
-		#Move Forward
-		print "move forward", robot.x, robot.y
-		if robot.heading == 0: #heading north
-			robot.y = robot.y - 1
-			
-		if robot.heading == 1: #heading east
-			robot.x = robot.x + 1
-
-		if robot.heading == 2: #heading south
-			robot.y = robot.y + 1
-
-		if robot.heading == 3:
-			robot.x = robot.x - 1
-  
+	#++++++++++++++++TURN LEFT+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	if robot.sens[0] == 1: #Turn Left
+		if robot.heading == 0: 		#Heading at North, make your heading West
+			robot.heading = 3
+		elif robot.heading == 1: 		#Heading at East, make your heading North
+			robot.heading = 0
+		elif robot.heading == 2: 		#Heading at South, make your heading East
+			robot.heading = 1
+		elif robot.heading == 3:		#Heading at West, make your heading South
+			robot.heading = 2
+	
+	#+++++++++++++++TURN RIGHT+++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	elif robot.sens[4] == 1:
-		robot.heading = robot.heading + 1	#Turn Right
-	else:#Move Forward
+		if robot.heading == 0: 		#Heading at North, make your heading East
+			robot.heading = 1	
+		elif robot.heading == 1: 		#heading at East, make your heading South						
+			robot.heading = 2 			
+		elif robot.heading == 2: 		#heading at South, make your heading West
+			robot.heading = 3
+		elif robot.heading == 3: 		#heading at West, make your heading North
+			robot.heading = 0			
+		
+	#+++++++++++++++FORWARD++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	elif robot.sens[2] == 1:	
 		if robot.heading == 0: #heading north
-			robot.y = robot.y - 1
-			
-		if robot.heading == 1: #heading east
 			robot.x = robot.x + 1
-
-		if robot.heading == 2: #heading south
+		elif robot.heading == 1: #heading east
 			robot.y = robot.y + 1
-
-		if robot.heading == 3:
+			print "move forward"
+		elif robot.heading == 2: #heading south
 			robot.x = robot.x - 1
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+			
+		elif robot.heading == 3: #heading west
+			robot.y = robot.y - 1
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def format_heading():
+	if robot.heading == 0:
+		rhead = '^'
+	if robot.heading == 1:
+		rhead = '>'
+	if robot.heading == 2:
+		rhead = 'v'
+	if robot.heading == 3:
+		rhead = '<'
+	print "rhead ", rhead
+	return rhead
 
 def draw_map():
 	pass
@@ -172,17 +188,21 @@ robot_init() #initialise the robot
 print "Getting first position"
 robot_getsensors(robot.x,robot.y,robot.heading)
 
-
-for life in range(25):
+lifetime = 25
+for life in range(lifetime):
 	line_follow()
 	robot_getsensors(robot.x,robot.y,robot.heading)
+	print "Iteration ", life
 	print "Sensors ", robot.sens
 	print "Heading" , robot.heading
 	print "robot x pos ", robot.x
 	print "robot y pos ", robot.y
 	maze2 = copy.deepcopy(maze)
-	maze2[robot.x][robot.y] = 'R'
+	rhead = 0
+	format_heading()
+	maze2[robot.x][robot.y] = rhead
 	pp.pprint(maze2)
+	time.sleep(1)
 	
 print"check the old maze is still intact"
 pp.pprint(maze)
