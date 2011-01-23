@@ -370,7 +370,7 @@ def finite_state_machine():
 	fsm_create_binstr()
 	print fsm.table
 	print fsm.bintab
-	pyth
+	
 	#print help(fsm.bintab)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
