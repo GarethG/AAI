@@ -15,10 +15,11 @@ import time
 numpy.set_printoptions(threshold=sys.maxint) #numpy likes to print large arrays wierd, supress this
 
 #+++++++++++++++++++++File input args+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-
-#bf = open('./data/bestfit.txt','a') #opens bestfit file, arg 'a' opens the file for appending data
+fitness = open('./data/fitness.txt','a') #opens bestfit file, arg 'a' opens the file for appending data
 #mf = open('./data/meanfit.txt','a')
 
+#+++++++++++++++++++++++GLOBAL++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+fsmtable = [] #Finite State Machine Table  
 
 #+++++++++++++++++++++MAZE+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 maze =  [
@@ -39,17 +40,19 @@ class robot:
 	x = 0
 	y = 0
 	heading = 0 #0 = N,  1 = E , 2 = S, 3 = W
- 
-	health = 0  #robot can only move 25 places so every move it looses a health point  
-	
+ 	mhead = 0 #keep the display of heading separate to the actual heading, its only for show
+	health = 26  #robot can only move 25 places so every move it looses a health point  
+	fitness = 0
 	sens = [0,0,0,0,0] #[left, leftd, fwd, rightd, right]
- #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	dsens = 0
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #++++++++++++++++++++++init robot++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def robot_init():
 	robot.x = 1 # the row
 	robot.y = 0 # the col
 	robot.heading = 1 #Start Facing East
+	robot.fitness = 0
 	print "Robot Initialised"
 
 #+++++++++++++++++++++++++++++++++MOVE ROBOT+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -75,11 +78,11 @@ def robot_getsensors(xpos, ypos, robheading):
 	#check to see if robot is at a border of a maze
 	if robot.x == 0:
 		minusx = 7
-	if robot.x == 7:
+	elif robot.x == 7:
 		plusx = 0
-	if robot.y == 0:
+	elif robot.y == 0:
 		minusy = 7		
-	if robot.y == 7:
+	elif robot.y == 7:
 		plusy = 0	
 
 	#+++++++++++NORTH HEADING+++++++++++++++++++++++++++++++++++	
@@ -90,42 +93,68 @@ def robot_getsensors(xpos, ypos, robheading):
 		robot.sens[3] = nmaze[minusx,	plusy	]	#Right Diagonal Sensor
 		robot.sens[4] = nmaze[x,	plusy 	]	#Right Sensor Sensor
 	#++++++++++EAST HEADING+++++++++++++++++++++++++++++++++++++
-	if robot.heading == 1: # East
+	elif robot.heading == 1: # East
 		robot.sens[0] = nmaze[minusx,	y	]
 		robot.sens[1] = nmaze[minusx,	plusy	]
 		robot.sens[2] = nmaze[x,	plusy	]
 		robot.sens[3] = nmaze[plusx, 	plusy	]
 		robot.sens[4] = nmaze[plusx,	y	]
 	#++++++++++SOUTH HEADING+++++++++++++++++++++++++++++++++++++
-	if robot.heading == 2: # South
+	elif robot.heading == 2: # South
 		robot.sens[0] = nmaze[x,	plusy	]
 		robot.sens[1] = nmaze[plusx,	plusy	]
 		robot.sens[2] = nmaze[plusx,	y	]
 		robot.sens[3] = nmaze[plusx,	plusy	]
 		robot.sens[4] = nmaze[x,	minusy	]
 	#++++++++++WEST HEADING+++++++++++++++++++++++++++++++++++++
-	if robot.heading == 2: #West
+	elif robot.heading == 3: #West
 		robot.sens[0] = nmaze[plusx,	y	]
 		robot.sens[1] = nmaze[plusx,	minusy	]
 		robot.sens[2] = nmaze[x,	minusy	]
 		robot.sens[3] = nmaze[minusx,	minusy	]
 		robot.sens[4] = nmaze[minusx,	y	]
 
+	#++++++++Convert the sensor data into a single denary value++++++++++
+	dsens = 0
+	x1 = 0
+	for x in robot.sens[:]:
+		dsens = dsens + x * pow(2, x1)
+		x1 = x1+1
+	robot.dsens = dsens #pass dsens to the robot class
+	#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
+	
+
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#+++++++++++++++++++LINE FOLLOWER++++++++++++++++++++++++++++++++++++++++++++++++
-def line_follow():
-	if robot.x == 0:
-		robot.x = 7
-	if robot.x == 7:
-		robot.x = 0
-	if robot.y == 0:
-		robot.y = 7		
-	if robot.y == 7:
-		robot.y = 0	
 
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#-----------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
+#+++++++++++++++++++++++++LINE FOLLOWER FUNCTION FUNCTIONS++++++++++++++++++++++++++++++++
+#-----------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
+
+#++++++++++++++++++line_follow+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# decide which orientation to turn to relative to the left, forward and right sensors
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+def line_follow():
+
+	#+++++++++++++++FORWARD++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	if robot.sens[2] == 1:								#	N	
+		if robot.heading == 0: #heading north					#	|
+			robot.x = robot.x - 1						#    W--0--E 
+		elif robot.heading == 1: #heading east					#	|		
+			robot.y = robot.y + 1						#	S
+		elif robot.heading == 2: #heading south					#		
+			robot.x = robot.x + 1						#			
+		elif robot.heading == 3: #heading west							
+			robot.y = robot.y - 1
+		
 	#++++++++++++++++TURN LEFT+++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	if robot.sens[0] == 1: #Turn Left
+	elif robot.sens[0] == 1: #Turn Left
 		if robot.heading == 0: 		#Heading at North, make your heading West
 			robot.heading = 3
 		elif robot.heading == 1: 		#Heading at East, make your heading North
@@ -145,35 +174,147 @@ def line_follow():
 			robot.heading = 3
 		elif robot.heading == 3: 		#heading at West, make your heading North
 			robot.heading = 0			
+	robot_getsensors(robot.x,robot.y,robot.heading) #get sensor data
+	robot_fitness() #eval the fitness of the robot
+	del_tile() #remove the tile robot is currently in
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+def robot_linefollow(): 
+	for life in range(robot.health):
+		print"------------------------------------------------------------------------"	
+		print "Iteration ", life	
+		line_follow()	
+		#robot_getsensors(robot.x,robot.y,robot.heading)
 		
-	#+++++++++++++++FORWARD++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	elif robot.sens[2] == 1:	
-		if robot.heading == 0: #heading north
-			robot.x = robot.x + 1
-		elif robot.heading == 1: #heading east
-			robot.y = robot.y + 1
-			print "move forward"
-		elif robot.heading == 2: #heading south
-			robot.x = robot.x - 1
-			
-		elif robot.heading == 3: #heading west
-			robot.y = robot.y - 1
+		#+++++printing stuff+++++++++++++++++++++++++++++++++++++++++++++++++++++
+		format_heading()#change the heading from 1 to 4 to arrows showing heading
+		print "Sensors ", robot.sens
+		print "Heading" , robot.mhead, " ",robot.heading
+		print "robot x pos ", robot.x
+		print "robot y pos ", robot.y
+		maze2 = copy.deepcopy(maze)
+		maze2[robot.x][robot.y] = robot.mhead
+		pp.pprint(maze2)
+		
+		
+		print"------------------------------------------------------------------------"
+		time.sleep(0.2)#+++++++wait++++++++
+
+#---------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------
+#----------------------END OF LINE FOLLOWER---------------------------------------------
+#---------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------
+
+#+++++++++++++++++++FITNESS+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def robot_fitness():
+	if maze[robot.x][robot.y] == 1: #if the robot is in a trail tile then add one to the fitness
+		robot.fitness = robot.fitness + 1
+
+	
+#+++++++++++++++++++FORMAT HEADING+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def format_heading():
+	if robot.heading == 0: #North
+		robot.mhead = '^'
+	elif robot.heading == 1: #East
+		robot.mhead = '>'
+	elif robot.heading == 2: #South
+		robot.mhead = 'v'
+	elif robot.heading == 3: #West
+		robot.mhead = '<'
+	
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+#+++++++++++++++++++DELETE TILE BEHIND++++++++++++++++++++++++++++++++++++++++++++++++++++
+def del_tile():
+	if maze[robot.x][robot.y] == 1:
+		maze[robot.x][robot.y] = 0 #if robot has passed through a tile == 1 then make it 3 to show its path
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-def format_heading():
-	if robot.heading == 0:
-		rhead = '^'
-	if robot.heading == 1:
-		rhead = '>'
-	if robot.heading == 2:
-		rhead = 'v'
-	if robot.heading == 3:
-		rhead = '<'
-	print "rhead ", rhead
-	return rhead
 
-def draw_map():
+#+++++++++++++++++++little animation if the robot dies+++++++++++++++++++++++++++++++++++
+def robot_die():
+	print "You are the weakest link goodbye"
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#+++++++++++++++++++little animation if the robot finds the finish+++++++++++++++++++++++
+def robot_finished():
+	if robot.x == 5:
+		if robot.y == 1:
+			print "ROBOT REACHED THE FINISH!!?!"
+	elif robot.x != 5:
+		if robot.y != 1:		
+			robot_die()#robot must be dead
+	
+#++++++++++++++++WRITE FITNESS TO FILE+++++++++++++++++++++++++++++++++++++++++++++++++++
+def filewrite_fitness():
+	fit = robot.fitness
+	fit = str(fit)	
+	fitness.write (fit)
+	fitness.write('\n')	
+
+
+
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#-----------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
+#+++++++++++++++++++++++++FINITE STATE MACHINE FUNCTIONS++++++++++++++++++++++++++++++++++
+#-----------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
+#	1. Build a table with all possible sensor readings
+#	2. Generate random actions for each set of sensor readings
+#	3. Simulate each action and evaluate it fitness
+#	4. 
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#-------------------------BUILD SENSOR TABLE----------------------------------------------
+#-----------------------------------------------------------------------------------------
+# Build a table that contains all the possible sensor readings, there are 32 possible 	--
+# combinations for the 5 sensors on the robot						--
+#-----------------------------------------------------------------------------------------
+def fsm_build_table():
 	pass
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def fsm_gen_actions():
+	for row in range(32): #32 because thats the maximum number of possible sensor readings
+		fsmtable.append(random.randint(0,3))#append random value at the end of fsmtable
+	return fsmtable
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def fsm_sim():
+	robot_init()
+	action = 0
+	for life in range(robot.health):
+		print"-------------------------------------------------------------------"
+		print "Iteration ", life
+		robot_getsensors(robot.x,robot.y,robot.heading)
+		action = fsmtable[robot.dsens]
+		print "robot.dsens = ", robot.dsens
+		print "selected action ", action
+	print fsmtable
+def fsm_fitness():
+	pass
+
+def fsm_create_binstr():
+	pass
+
+def fsm_evolution():
+	pass
+
+#---------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++MAIN++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 print "Create Maze"
 pp.pprint(maze)
@@ -181,55 +322,30 @@ pp.pprint(maze)
 print "The Numpy Maze"
 print nmaze
 
-#robot.x = 4
 
 robot_init() #initialise the robot
+#robot_linefollow()
 
-print "Getting first position"
-robot_getsensors(robot.x,robot.y,robot.heading)
+fsm_gen_actions()	
+fsm_sim()
 
-lifetime = 25
-for life in range(lifetime):
-	line_follow()
-	robot_getsensors(robot.x,robot.y,robot.heading)
-	print "Iteration ", life
-	print "Sensors ", robot.sens
-	print "Heading" , robot.heading
-	print "robot x pos ", robot.x
-	print "robot y pos ", robot.y
-	maze2 = copy.deepcopy(maze)
-	rhead = 0
-	format_heading()
-	maze2[robot.x][robot.y] = rhead
-	pp.pprint(maze2)
-	time.sleep(1)
+print "robot fitness", robot.fitness
+#filewrite_fitness()
+#Robot has come out of its life cycle	
+robot_finished() #Check to see if the robot has reached the finish
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++END OF LINE+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 	
-print"check the old maze is still intact"
-pp.pprint(maze)
+##print"check the old maze is still intact"
+##pp.pprint(maze)
 
-#maze2[2][2] = 'R'
-#pp.pprint (maze2)
+#maze2[2][2] = 'R' How to access a single element in the array 
 
-#draw_map()
-
-
-#+++++++++++++++++++++++++++workout the sensors++++++++++++++++++++++++++++++++++
-
-#a = nmaze[robot.y,robot.x]
-#print a
-#+++++++++++++++++++++++++++++++++++++++++++++++
-#print "Move through the maze"
-
-#a  = maze[]
-#print "I'm trying to get all of the A's out of my body", a
-
-
-#for row in nmaze:
-#	for col in row:
-#		robot.y = nmaze
-#		print robot.y
-#	robot.x = col
-#	print robot.x
 
 
 	
