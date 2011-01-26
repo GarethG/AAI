@@ -330,12 +330,32 @@ def fsm_action():
 def fsm_create_binstr():
 	tab = []
 	bintab = []
+	newlist = []
 
 	for row in range(32):
 		tab = fsm.table[row]	
 		bintab.append(bin(tab)[2:].zfill(2))#zfill is 5 to pad out bit pattern
-		fsm.bintab = bintab
+		
 	
+	for row in bintab:
+		if row == '00': #element = 0 so append 2 zeros
+			newlist.append('0')
+			newlist.append('0')
+		elif row == '01': #if the element = 01 then split it and append it in a new list
+			newlist.append('0')
+			newlist.append('1')
+		elif row == '10':
+			newlist.append('1')
+			newlist.append('0')
+		elif row == '11':
+			newlist.append('1')
+			newlist.append('1')
+	
+	fsm.bintab = newlist
+	
+		
+		
+		
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #++++++++++++++FSM SIMULATION+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def fsm_sim():
