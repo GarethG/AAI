@@ -380,7 +380,11 @@ def fsm_sim():
 
 
 def fsm_evolution():
-	pass
+	
+	#random number between 0 and 64
+	
+	#xor that bit in bintab
+	#rerun simulation
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #+++++++++++++++++ALL FSM IN ONE FINAL CALL+++++++++++++++++++++++++++++++++++++++++++++
