@@ -535,7 +535,7 @@ def fsm_sim():
 		fsm.action = fsm.table[robot.dsens]
 		fsm_action()
 		format_heading()
-		maze2 = copy.deepcopy(maze.maze)
+		maze2 = copy.deepcopy(maze.maze) #this is just for formating
 		maze2[robot.x][robot.y] = robot.mhead #format heading
 		pp.pprint(maze2)
 		print "robot.dsens = ", robot.dsens
