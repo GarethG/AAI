@@ -45,6 +45,13 @@ class fsm:
 	bintable = []
 	mutrate = 30
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#++++++++++++++++++++++++POPULATION CLASS+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+class population:
+	size = 10 #size of the population
+	pop = [] #this should hold the entire population, but in the binary string of 64
+	pfit = [] #rather than doing one 2D array just have another 1D array of fitness thats the same length as the population
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #+++++++++++++++++++++++init maze++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def maze_init():
 	maze.maze =  [
@@ -462,29 +469,8 @@ def fsm_create_binstr():
 			newlist.append(1)
 	
 	fsm.bintab = newlist
-	
-#+++++++++++++++MUTATION++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++		
-def fsm_evolution():
-	#random number between 0 and 64
-	bit = random.randint(0,63)
-	i = random.randint(0,100)
-	if i < fsm.mutrate:
-		#print "MUTATING", i
-		#print fsm.bintab
-		#print "bintab val", fsm.bintab[col]
-		
-		if fsm.bintab[bit] == 0:
-			fsm.bintab[bit] = 1
-		elif fsm.bintab[bit] == 1:
-			fsm.bintab[bit] = 0
- 
-		#print "new bintab val", fsm.bintab[col]
-		#time.sleep(3)
-	
-	#xor that bit in bintab
-	#rerun simulation
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++		
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#++++++++++++++++++binary to denary++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def fsm_bin2str():
 	bslist = []
 	j = 0
@@ -509,11 +495,33 @@ def fsm_bin2str():
 	fsm.table = bslist #pass the new action list into the fsm table
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#++++++++++++++FSM SIMULATION+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++MUTATION++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++		
+def fsm_evolution():
+	#random number between 0 and 64
+	bit = random.randint(0,63)
+	i = random.randint(0,100)
+	if i < fsm.mutrate:
+		#print "MUTATING", i
+		#print fsm.bintab
+		#print "bintab val", fsm.bintab[col]
+		
+		if fsm.bintab[bit] == 0:
+			fsm.bintab[bit] = 1
+		elif fsm.bintab[bit] == 1:
+			fsm.bintab[bit] = 0
+ 
+		#print "new bintab val", fsm.bintab[col]
+		#time.sleep(3)
+	
+	#xor that bit in bintab
+	#rerun simulation
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++		
+
+#++++++++++++++FSM SIMULATION ONE LIFE CYCLE ITERATION+++++++++++++++++++++++++++++++++
 def fsm_sim():
 	maze_init()	
 	robot_init()
-	
+	#load x index of population
 	
 	action = 0
 	for life in range(robot.health):
@@ -536,13 +544,13 @@ def fsm_sim():
 		time.sleep(0)#+++++++wait++++++++
 
 		#now perform mutation	
-	print "the original fsm table"
-	print fsm.table	
-	fsm_create_binstr()#turn the action table into a binary string for bit mutation
-	fsm_evolution()
-	fsm_bin2str()
-	print "the mutated fsm table"
-	print fsm.table
+	#print "the original fsm table"
+	#print fsm.table	
+	#fsm_create_binstr()#turn the action table into a binary string for bit mutation
+	#fsm_evolution()
+	#fsm_bin2str()
+	#print "the mutated fsm table"
+	#print fsm.table
 		#now turn bintab back into the action table format		
 		
 
@@ -550,14 +558,44 @@ def fsm_sim():
 
 #+++++++++++++++++ALL FSM IN ONE FINAL CALL+++++++++++++++++++++++++++++++++++++++++++++
 def finite_state_machine():
-	fsm_gen_actions() #Randomly Generate the list of possible actions
-	while robot.fitness < 19:
+	#fsm_gen_actions() #Randomly Generate the list of possible actions
+	
+	#Generate the population	
+	i = 0
+	while i in range(population.size):
+		fsm_gen_actions() #randomly generate some actions, but this is in denary
+		fsm_create_binstr()
+		population.pop.append(fsm.bintab)
+		i = i + 1
+	#------------------------------------------------
+	#----------test each genome----------------------
+	#choose the genome to test
+	x = 0
+	masit = 0
+	while x in range(population.size):
+		fsm.bintable = population.pop[x] #get genome in x index, load it into finite state machine class
+		#convert the binary table to denary to run the sim, this is stupid but cont be bothered to change a load of code
+		fsm_bin2str()
 		fsm_sim()
-		time.sleep(0)
-		filewrite_fitness()
-		filewrite_genome()
+		x = x + 1 # increment through the population
+	print "DONE"	
 
-	print "ROBOT FOUND THE FINISH"
+	#litte bit to print out the entire population
+	j = 0 
+	while j in range(population.size):
+		print population.pop[j]
+		j = j + 1
+	#--------------------------------------------
+	#pp.pprint (population.pop)
+	#print population.pop[2]
+	
+	#while robot.fitness < 19:
+	#	fsm_sim()
+	#	time.sleep(0)
+	#	filewrite_fitness()
+	#	filewrite_genome()
+
+	#print "ROBOT FOUND THE FINISH"
 	
 	#print help(fsm.bintab)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
