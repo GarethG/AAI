@@ -16,24 +16,15 @@ numpy.set_printoptions(threshold=sys.maxint) #numpy likes to print large arrays 
 
 #+++++++++++++++++++++File input args+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
 fitness = open('./data/fitness.txt','a') #opens bestfit file, arg 'a' opens the file for appending data
-#mf = open('./data/meanfit.txt','a')
+genome = open('./data/genome.txt','a')
 
 #+++++++++++++++++++++++GLOBAL++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #fsmtable = [] #Finite State Machine Table  
 
 #+++++++++++++++++++++MAZE+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-maze =  [
-	[ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
-	[ 0 , 1 , 1 , 1 , 1 , 1 , 0 , 0 ],
-	[ 0 , 0 , 0 , 0 , 0 , 1 , 0 , 0 ],
-	[ 0 , 0 , 0 , 0 , 0 , 1 , 0 , 0 ],
-	[ 0 , 0 , 0 , 0 , 0 , 1 , 1 , 1 ],
-	[ 0 , 1 , 1 , 1 , 0 , 0 , 0 , 1 ],
-	[ 0 , 0 , 0 , 1 , 1 , 1 , 1 , 1 ],
-	[ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ],
-	]
-
-nmaze = numpy.array(maze)
+class maze:
+	maze = 0
+	nmaze = 0 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #+++++++++++++++++++++++++ROBOT CLASS+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 class robot:
@@ -45,16 +36,37 @@ class robot:
 	fitness = 0
 	sens = [0,0,0,0,0] #[left, leftd, fwd, rightd, right]
 	dsens = 0
+	CWarn = 0
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #++++++++++++++++++++++++FINITE STATE MACHINE CLASS+++++++++++++++++++++++++++++++++++++++++++++++++++++
 class fsm:
 	table = []
 	action = 0
 	bintable = []
+	mutrate = 30
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++init maze++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def maze_init():
+	maze.maze =  [
+		[ 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 ],
+		[ 2 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 2 ],
+		[ 2 , 0 , 1 , 1 , 1 , 1 , 1 , 0 , 0 , 2 ],
+		[ 2 , 0 , 0 , 0 , 0 , 0 , 1 , 0 , 0 , 2 ],
+		[ 2 , 0 , 0 , 0 , 0 , 0 , 1 , 0 , 0 , 2 ],
+		[ 2 , 0 , 0 , 0 , 0 , 0 , 1 , 1 , 1 , 2 ],
+		[ 2 , 0 , 1 , 1 , 1 , 0 , 0 , 0 , 1 , 2 ],
+		[ 2 , 0 , 0 , 0 , 1 , 1 , 1 , 1 , 1 , 2 ],
+		[ 2 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 2 ],
+		[ 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 ],
+		]
+
+	maze.nmaze = numpy.array(maze.maze)
+
+
 #++++++++++++++++++++++init robot++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def robot_init():
-	robot.x = 1 # the row
-	robot.y = 0 # the col
+	robot.x = 2 # the row
+	robot.y = 1 # the col
 	robot.heading = 1 #Start Facing East
 	robot.fitness = 0
 	print "Robot Initialised"
@@ -80,44 +92,113 @@ def robot_getsensors(xpos, ypos, robheading):
 
 	#if the robot reaches the end of the maze it's sensors should wrap around so
 	#check to see if robot is at a border of a maze
-	if robot.x == 0:
-		minusx = 7
-	elif robot.x == 7:
-		plusx = 0
-	elif robot.y == 0:
-		minusy = 7		
-	elif robot.y == 7:
-		plusy = 0	
+	#if robot.x == 0:
+	#	minusx = 7
+	#	print "wrapping 1"
+	#elif robot.x == 7:
+	#	plusx = 0
+	#	print "wrapping 2"
+	#elif robot.y == 0:
+	#	minusy = 7
+	#	print "wrapping 3"
+	#elif robot.y == 7:
+	#	plusy = 0	
+	#	print "wrapping 4"
 
+	
 	#+++++++++++NORTH HEADING+++++++++++++++++++++++++++++++++++	
 	if robot.heading == 0: #North
-		robot.sens[0] = nmaze[x,	minusy	]	#Left Sensor
-		robot.sens[1] = nmaze[minusx,	minusy	]	#Left Diagonal Sensor
-		robot.sens[2] = nmaze[minusx,	y	]	#Forward Sensor
-		robot.sens[3] = nmaze[minusx,	plusy	]	#Right Diagonal Sensor
-		robot.sens[4] = nmaze[x,	plusy 	]	#Right Sensor Sensor
+		robot.sens[0] = maze.nmaze[x	,	minusy	]	#Left Sensor
+		robot.sens[1] = maze.nmaze[minusx,	minusy	]	#Left Diagonal Sensor
+		robot.sens[2] = maze.nmaze[minusx,	y	]	#Forward Sensor
+		robot.sens[3] = maze.nmaze[minusx,	plusy	]	#Right Diagonal Sensor
+		robot.sens[4] = maze.nmaze[x	,	plusy 	]	#Right Sensor Sensor
 	#++++++++++EAST HEADING+++++++++++++++++++++++++++++++++++++
 	elif robot.heading == 1: # East
-		robot.sens[0] = nmaze[minusx,	y	]
-		robot.sens[1] = nmaze[minusx,	plusy	]
-		robot.sens[2] = nmaze[x,	plusy	]
-		robot.sens[3] = nmaze[plusx, 	plusy	]
-		robot.sens[4] = nmaze[plusx,	y	]
+		robot.sens[0] = maze.nmaze[minusx,	y	]
+		robot.sens[1] = maze.nmaze[minusx,	plusy	]
+		robot.sens[2] = maze.nmaze[x	,	plusy	]
+		robot.sens[3] = maze.nmaze[plusx, 	plusy	]
+		robot.sens[4] = maze.nmaze[plusx,	y	]
 	#++++++++++SOUTH HEADING+++++++++++++++++++++++++++++++++++++
 	elif robot.heading == 2: # South
-		robot.sens[0] = nmaze[x,	plusy	]
-		robot.sens[1] = nmaze[plusx,	plusy	]
-		robot.sens[2] = nmaze[plusx,	y	]
-		robot.sens[3] = nmaze[plusx,	plusy	]
-		robot.sens[4] = nmaze[x,	minusy	]
+		robot.sens[0] = maze.nmaze[x	,	plusy	]
+		robot.sens[1] = maze.nmaze[plusx,	plusy	]
+		robot.sens[2] = maze.nmaze[plusx,	y	]
+		robot.sens[3] = maze.nmaze[plusx,	plusy	]
+		robot.sens[4] = maze.nmaze[x	,	minusy	]
 	#++++++++++WEST HEADING+++++++++++++++++++++++++++++++++++++
 	elif robot.heading == 3: #West
-		robot.sens[0] = nmaze[plusx,	y	]
-		robot.sens[1] = nmaze[plusx,	minusy	]
-		robot.sens[2] = nmaze[x,	minusy	]
-		robot.sens[3] = nmaze[minusx,	minusy	]
-		robot.sens[4] = nmaze[minusx,	y	]
+		robot.sens[0] = maze.nmaze[plusx,	y	]
+		robot.sens[1] = maze.nmaze[plusx,	minusy	]
+		robot.sens[2] = maze.nmaze[x	,	minusy	]
+		robot.sens[3] = maze.nmaze[minusx,	minusy	]
+		robot.sens[4] = maze.nmaze[minusx,	y	]
 
+	
+
+		
+	MwrapX = xpos - 7
+	PwrapX = xpos + 7
+	MwrapY = ypos - 7
+	PwrapY = ypos + 7
+	#++++++++++++++++NORTH WRAPPING++++++++++++++++++++++++++++++
+	if robot.heading == 0: #north
+		if robot.sens[2] == 2: #if front is at a border 
+			robot.sens[2] = maze.nmaze[MwrapX , y]
+			robot.CWarn = 1
+			print"north 2 in front"
+
+		if robot.sens[0] == 2: #if left is at border
+			robot.sens[0] = maze.nmaze[x , PwrapY]
+	
+		if robot.sens[4] == 2: #if right is at  border
+			robot.sens[4] = maze.nmaze[x , MwrapY]
+	
+	#++++++++++++++++EAST WRAPPING+++++++++++++++++++++++++++++	
+	if robot.heading == 1: #east
+
+		if robot.sens[2] == 2: #front
+			robot.sens[2] = maze.nmaze[x , MwrapY]
+			robot.CWarn = 1
+			print"east 2 in front"
+
+		if robot.sens[0] == 2: #left is at border
+			robot.sens[0] = maze.nmaze[PwrapX , y]
+
+		if robot.sens[4] == 2: #if right is at border
+			robot.sens[4] = maze.nmaze[MwrapX , y]
+
+	#+++++++++++++++SOUTH WRAPPING+++++++++++++++++++++++++++
+	if robot.heading == 2: #SOUTH
+		
+		if robot.sens[2] == 2:
+			robot.sens[2] = maze.nmaze[MwrapX , y]
+			robot.CWarn = 1
+			print"south 2 in front"
+		if robot.sens[0] == 2:
+			robot.sens[0] = maze.nmaze[x , MwrapY]
+
+		if robot.sens[4] == 2:
+			robot.sens[4] = maze.nmaze[x , PwrapY]
+
+	#+++++++++++++++WEST WRAPPING++++++++++++++++++++++++++
+	if robot.heading == 3: #WEST
+
+		if robot.sens[2] == 2:
+			robot.sens[2] = maze.nmaze[x , PwrapY]
+			robot.CWarn = 1
+			print"west 2 in front"
+		if robot.sens[0] == 2:
+			robot.sens[0] = maze.nmaze[MwrapX , y]
+
+		if robot.sens[4] == 2:
+			robot.sens[4] = maze.nmaze[PwrapX , y]
+	
+
+	#++++++++For now always make the diagonal sensors = 0++++++++++++++++
+	robot.sens[1] = 0
+	robot.sens[3] = 0
 	#++++++++Convert the sensor data into a single denary value++++++++++
 	dsens = 0
 	x1 = 0
@@ -125,6 +206,7 @@ def robot_getsensors(xpos, ypos, robheading):
 		dsens = dsens + x * pow(2, x1)
 		x1 = x1+1
 	robot.dsens = dsens #pass dsens to the robot class
+	#print "dsens in sensors ", robot.dsens
 	#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
 	
 
@@ -213,7 +295,7 @@ def robot_linefollow():
 
 #+++++++++++++++++++FITNESS+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def robot_fitness():
-	if maze[robot.x][robot.y] == 1: #if the robot is in a trail tile then add one to the fitness
+	if maze.maze[robot.x][robot.y] == 1: #if the robot is in a trail tile then add one to the fitness
 		robot.fitness = robot.fitness + 1
 
 	
@@ -232,8 +314,8 @@ def format_heading():
 
 #+++++++++++++++++++DELETE TILE BEHIND++++++++++++++++++++++++++++++++++++++++++++++++++++
 def del_tile():
-	if maze[robot.x][robot.y] == 1:
-		maze[robot.x][robot.y] = 0 #if robot has passed through a tile == 1 then make it 3 to show its path
+	if maze.maze[robot.x][robot.y] == 1:
+		maze.maze[robot.x][robot.y] = 0 #if robot has passed through a tile == 1 then make it 3 to show its path
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -257,6 +339,13 @@ def filewrite_fitness():
 	fit = str(fit)	
 	fitness.write (fit)
 	fitness.write('\n')	
+
+def filewrite_genome():
+	gen = fsm.table
+	gen = str(gen)
+	genome.write(gen)
+	genome.write('\n')
+	
 
 
 
@@ -282,8 +371,8 @@ def filewrite_fitness():
 #-----------------------------------------------------------------------------------------
 def fsm_build_table():
 	pass
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-def fsm_gen_actions():
+#+++++++++++++++++GENERATE FSM ACTIONS TABLE++++++++++++++++++++++++++++++++++++++++++++++++++++
+def fsm_gen_actions(): #initialise a table for the fsm actions
 	table = []
 	for row in range(32): #32 because thats the maximum number of possible sensor readings
 		table.append(random.randint(0,3))#append random value at the end of fsmtable
@@ -313,15 +402,36 @@ def fsm_action():
 			robot.heading = 1
 		elif robot.heading == 3:		#Heading at West, make your heading South
 			robot.heading = 2
+
 	if fsm.action == 3: #Go Forward 
-		if robot.heading == 0: #heading north						
-			robot.x = robot.x - 1						     
+		if robot.heading == 0: #heading north
+			if robot.CWarn == 1: #crash warning raised
+				robot.x = robot.x + 7 #your at a border dont drive into that so wrap to top of maze
+				robot.CWarn = 0 #reset crash flag
+			else: 
+				robot.x = robot.x - 1						     
+
 		elif robot.heading == 1: #heading east								
-			robot.y = robot.y + 1							
-		elif robot.heading == 2: #heading south							
-			robot.x = robot.x + 1									
-		elif robot.heading == 3: #heading west							
-			robot.y = robot.y - 1
+			if robot.CWarn == 1:
+				robot.y = robot.y - 7
+				robot.CWarn = 0			
+			else:
+				robot.y = robot.y + 1							
+		
+		elif robot.heading == 2: #heading south
+			if robot.CWarn == 1:
+				robot.x = robot.x - 7
+				robot.CWarn = 0							
+			else:
+				robot.x = robot.x + 1		
+							
+		elif robot.heading == 3: #heading west
+			if robot.CWarn == 1:
+				robot.CWarn = 0
+				robot.y = robot.y + 7							
+			else:
+				robot.y = robot.y - 1
+	robot.CWarn = 0
 	robot_fitness()	
 	del_tile()#deletethe tile your on so you dont count its fitness more than once
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -339,61 +449,115 @@ def fsm_create_binstr():
 	
 	for row in bintab:
 		if row == '00': #element = 0 so append 2 zeros
-			newlist.append('0')
-			newlist.append('0')
+			newlist.append(0)
+			newlist.append(0)
 		elif row == '01': #if the element = 01 then split it and append it in a new list
-			newlist.append('0')
-			newlist.append('1')
+			newlist.append(0)
+			newlist.append(1)
 		elif row == '10':
-			newlist.append('1')
-			newlist.append('0')
+			newlist.append(1)
+			newlist.append(0)
 		elif row == '11':
-			newlist.append('1')
-			newlist.append('1')
+			newlist.append(1)
+			newlist.append(1)
 	
 	fsm.bintab = newlist
 	
+#+++++++++++++++MUTATION++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++		
+def fsm_evolution():
+	#random number between 0 and 64
+	bit = random.randint(0,63)
+	i = random.randint(0,100)
+	if i < fsm.mutrate:
+		#print "MUTATING", i
+		#print fsm.bintab
+		#print "bintab val", fsm.bintab[col]
 		
+		if fsm.bintab[bit] == 0:
+			fsm.bintab[bit] = 1
+		elif fsm.bintab[bit] == 1:
+			fsm.bintab[bit] = 0
+ 
+		#print "new bintab val", fsm.bintab[col]
+		#time.sleep(3)
+	
+	#xor that bit in bintab
+	#rerun simulation
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++		
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def fsm_bin2str():
+	bslist = []
+	j = 0
+	k = 0
+	bitab = fsm.bintab
+	length = len(bitab)
+	for k in range(0,length,2):
+		j = k + 2
+		if bitab[k:j] == [0,0]:
+			bslist.append(0) # or 00
+
+		elif bitab[k:j] == [0,1]:
+			bslist.append(1) # or 01
+			
+		elif bitab[k:j] == [1,0]:
+			bslist.append(2) # or 10
+			
+		elif bitab[k:j] == [1,1]:
+			bslist.append(3) # or 11
+			
 		
-		
+	fsm.table = bslist #pass the new action list into the fsm table
+
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #++++++++++++++FSM SIMULATION+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def fsm_sim():
+	maze_init()	
 	robot_init()
+	
+	
 	action = 0
 	for life in range(robot.health):
 		print"-------------------------------------------------------------------"
 		print "Iteration ", life
 		robot_getsensors(robot.x,robot.y,robot.heading)
+		print "Got Sensors" 
+		print "Robot Sensors", robot.sens
+		print "Crash Warning Flag ", robot.CWarn
+		print "fitness ", robot.fitness 
 		fsm.action = fsm.table[robot.dsens]
 		fsm_action()
 		format_heading()
-		maze2 = copy.deepcopy(maze)
-		maze2[robot.x][robot.y] = robot.mhead
+		maze2 = copy.deepcopy(maze.maze)
+		maze2[robot.x][robot.y] = robot.mhead #format heading
 		pp.pprint(maze2)
 		print "robot.dsens = ", robot.dsens
 		print "selected action ", fsm.action
 		print"-------------------------------------------------------------------"
 		time.sleep(0)#+++++++wait++++++++
-	
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+		#now perform mutation	
+	print "the original fsm table"
+	print fsm.table	
+	fsm_create_binstr()#turn the action table into a binary string for bit mutation
+	fsm_evolution()
+	fsm_bin2str()
+	print "the mutated fsm table"
+	print fsm.table
+		#now turn bintab back into the action table format		
+		
 
 
-def fsm_evolution():
-	
-	#random number between 0 and 64
-	
-	#xor that bit in bintab
-	#rerun simulation
-#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #+++++++++++++++++ALL FSM IN ONE FINAL CALL+++++++++++++++++++++++++++++++++++++++++++++
 def finite_state_machine():
-	fsm_gen_actions()	
-	fsm_sim()
-	fsm_create_binstr()
-	print fsm.table
-	print fsm.bintab
+	fsm_gen_actions() #Randomly Generate the list of possible actions
+	while robot.fitness < 19:
+		fsm_sim()
+		time.sleep(0)
+		filewrite_fitness()
+		filewrite_genome()
+
+	print "ROBOT FOUND THE FINISH"
 	
 	#print help(fsm.bintab)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -411,10 +575,10 @@ def finite_state_machine():
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 print "Create Maze"
-pp.pprint(maze)
+pp.pprint(maze.maze)
 
 print "The Numpy Maze"
-print nmaze
+print maze.nmaze
 
 
 robot_init() #initialise the robot
