@@ -25,13 +25,14 @@ def Filewrite_Fitness():
 	fit = Robot.fitness
 	fit = str(fit)	
 	fitness.write (fit)
-	fitness.write('\n')	
+	fitness.write(' \n')	
 
-def Filewrite_Genome():
-	gen = Population.genome
-	gen = str(gen)
-	genome.write(gen)
-	genome.write('\n')
+def Filewrite_Genome(): #write the whole genome to a file
+	for i in range(Population.size):
+		gen = Population.genome[i]
+		gen = str(gen)
+		genome.write(gen)
+		genome.write(' \n')
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #+++++++++++++ ORIGINAL MAZE - DONT WRITE TO THIS++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -51,6 +52,9 @@ Master_Maze =  [
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #+++++++++++++MAZE CLASS++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#The only thing that should happen to this is deleting the tiles as the robot drives over them
+#Try and do everything with the numpy maze, use the normal maze just for drawing stuff
+
 class Maze: #	
 	maze = []
 	nmaze = []
@@ -68,56 +72,102 @@ class Robot:
 	cwarn = 0 		#Crash Warning Flag
 	brain = []
 
+	
+
 #++++++++++POPULATION CLASS+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 class Population:
-	size = 2		#Size of Population
+	size = 10		#Size of Population
 	genome = [] 		#all the genome's of the population
+	genlen = 64		#length of the genome	
 	fitness = [] 		#the fitness's of all the population
 	
 
 #+++++++++++++++++INITIALISATION STUFF+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-def Init_Maze():
+
+#--------------INIT MAZE-----------------------------------------------------------------------
+#
+#copy the master maze into the numpy array and the normal array
+def Init_Maze(): 
 	Maze.maze = Master_Maze	#copy the original maze into the maze class
-	Maze.nmaze = numpy.array(Maze.maze) #make a numpy maze
+	Maze.nmaze = numpy.array(Master_Maze) #make a numpy maze
 	print "Initialised Maze"
 
+#--------------INIT ROBOT----------------------------------------------------------------------
+#
+#Initalise the robot, start in the start position headin east, and load in a genome from the population
+#
+def Init_Robot():
+	Robot.x = 2 		# The row				N(0)
+	Robot.y = 1 		# The column				|
+	Robot.heading = 1 	# Start Facing East		  W(3)--0--E(1)
+	Robot.fitval = 0	# Fitness				|
+	#Robot.brain = the current genome in the population		S(2)
+	print "Robot Initialised"
+
+#------------INIT POPULATION--------------------------------------------------------------------
+#
+#Initialise the population, create N number (specified by Population.size) of genome's n bits long
+#
 def Init_Population():
 	table = []
 	i = 0
-	while i in range(Population.size):
-		for row in range(64): #64 bits long becasue there are 32 possible action of forward, left of right 
-			table.append(random.randint(0,1))#append random value at the end of the table
-		print "table ",table	
-		Population.genome.append(table)
-		
-		i = i + 1
 	
-	print "Population of ", Population.size ," Initialised"
-	#pp.pprint(Population.genome)	
+	for i in range(Population.size): #in range of the size of the population
+		Population.genome.append(Gen_Genome(Population.genlen))	#append a genome at the end of the genome stack, genlen = length of genome
+		i = i + 1
+		
+	print "Population of ", Population.size ," Initialised" #use len() to make this more accurate
+	Filewrite_Genome()
 
-def Init_Robot():
-	Robot.x = 2 # the row
-	Robot.y = 1 # the col
-	Robot.heading = 1 #Start Facing East
-	Robot.fitval = 0
-	#Robot.brain = the current genome in the population
-	print "Robot Initialised"
+
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#---------------FORMAT HEADING FUNCTION----------------------------------------------------------------
+#
+#Just easier to debug, change the heading of the robot into something meaningful for printing
+#By passing the new heading format into a new variable, saving the actual maze data
+#
+def Format_Heading():
+	if Robot.heading == 0: #North
+		Robot.mhead = '^'
+	elif Robot.heading == 1: #East
+		Robot.mhead = '>'
+	elif Robot.heading == 2: #South
+		Robot.mhead = 'v'
+	elif Robot.heading == 3: #West
+		Robot.mhead = '<'
 
+#---------------DELETE TILE FUNCTION-------------------------------------------------------------------
+#
+#Check to see if the robot is on a tile, if it is, delete the tile. if this isn't done then the robot could 
+#run over the same tile twice and count that as a fitness step, also it looks better
+#
 def Del_Tile():
 	if Maze.maze[Robot.x][Robot.y] == 1:
 		Maze.maze[Robot.x][Robot.y] = 0 #if robot has passed through a tile == 1 then make it 3 to show its path
 
+#---------------ROBOT FITNESS FUNCTION-------------------------------------------------------------------
+#
+#If the robot is on a tile then add 1 to its fitness
+#
 def Robot_Fitness():
 	if Maze.maze[Robot.x][Robot.y] == 1: #if the robot is in a trail tile then add one to the fitness
 		Robot.fitness = Robot.fitness + 1
 
 
+#--------------GENERATE GENOME FUNCTION-------------------------------------------------------------------
+#
+#Generate a binary bit pattern of a specified size
+#
+def Gen_Genome(size): 
+	table = []
+	for row in range(size): #size is passed in from the call
+		table.append(random.randint(0,1))#append random value at the end of table
+	return table #return a single bit pattern, size large
 
 
-
-
+def Get_Sensors(x,y,th): #pass in the robots x, y and theta(heading)
+	pass
 
 
 #++++++++++++++++MAIN+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -125,6 +175,12 @@ Init_Maze()
 Init_Robot()
 Init_Population()	
 
-pp.pprint (Maze.maze)
-print Maze.nmaze
+i = 0
+for i in range (Population.size):
+	print "Genome Number", i, "is ", len(Population.genome[i]), "bits long"	
+	print Population.genome[i]
+	i = i + 1
+
+#pp.pprint (Maze.maze)
+#print Maze.nmaze
 

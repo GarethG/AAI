@@ -589,11 +589,11 @@ def finite_state_machine():
 	#pp.pprint (population.pop)
 	#print population.pop[2]
 	
-	#while robot.fitness < 19:
-	#	fsm_sim()
-	#	time.sleep(0)
-	#	filewrite_fitness()
-	#	filewrite_genome()
+	while robot.fitness < 19:
+		fsm_sim()
+		time.sleep(0)
+		filewrite_fitness()
+		filewrite_genome()
 
 	#print "ROBOT FOUND THE FINISH"
 	
