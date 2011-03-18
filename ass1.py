@@ -390,7 +390,7 @@ def fsm_gen_actions(): #initialise a table for the fsm actions
 #+++++++++++++++++STATE MACHINE ACTION SELECTOR++++++++++++++++++++++++++++++++++++++++++++
 def fsm_action():
 	if fsm.action == 0:
-		pass
+		pass #do nothing
 	if fsm.action == 1: #Turn Right
 		if robot.heading == 0: 		#Heading at North, make your heading East
 			robot.heading = 1	
@@ -413,7 +413,7 @@ def fsm_action():
 	if fsm.action == 3: #Go Forward 
 		if robot.heading == 0: #heading north
 			if robot.CWarn == 1: #crash warning raised
-				robot.x = robot.x + 7 #your at a border dont drive into that so wrap to top of maze
+				robot.x = robot.x + 7 #your at a border dont drive into that, so wrap to top of maze
 				robot.CWarn = 0 #reset crash flag
 			else: 
 				robot.x = robot.x - 1						     

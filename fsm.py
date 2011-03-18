@@ -13,6 +13,7 @@ import sys
 import pprint as pp
 import copy
 import time
+import pipes
 
 numpy.set_printoptions(threshold=sys.maxint) #numpy likes to print large arrays wierd, supress this
 
@@ -22,7 +23,7 @@ genome = open('./data/genome.txt','a')
 
 #++++++++++++++++WRITE TO FILE+++++++++++++++++++++++++++++++++++++++++++++++++++
 def Filewrite_Fitness():
-	fit = Robot.fitness
+	fit = Robot.fitval
 	fit = str(fit)	
 	fitness.write (fit)
 	fitness.write(' \n')	
@@ -33,6 +34,24 @@ def Filewrite_Genome(): #write the whole genome to a file
 		gen = str(gen)
 		genome.write(gen)
 		genome.write(' \n')
+
+#+++++++++++++++WRITE TO THE PIPES!!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#Write into pipes in linux (not sure if this will work in windows), read this using another 
+#python script, functionality such as rolling average fitness and plot will be cleaner this way
+
+#--------------SETUP THE PIPES--------------------------------
+#
+t = pipes.Template()
+t.append('tr a-z A-Z', '--')
+f = t.open('/tmp/fsm','w')
+f.write('Initialised Pipe')
+f.close()
+def Pipe_Write(data):
+	f  = t.open('/tmp/fsm','w')
+	data = str(data)	
+	f.write(data)
+	f.close
+
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #+++++++++++++ ORIGINAL MAZE - DONT WRITE TO THIS++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -52,25 +71,25 @@ Master_Maze =  [
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #+++++++++++++MAZE CLASS++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#The only thing that should happen to this is deleting the tiles as the robot drives over them
+#The only thing that should happen to this is deleting the tiles as the Robot drives over them
 #Try and do everything with the numpy maze, use the normal maze just for drawing stuff
 
 class Maze: #	
 	maze = []
 	nmaze = []
 
-#++++++++++++ROBOT CLASS++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#++++++++++++Robot CLASS++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 class Robot:
 	x = 0 			#X Position
 	y = 0 			#Y position
 	heading = 0 		#0 = N,  1 = E , 2 = S, 3 = W
  	format_head = 0 	#keep the display of heading separate to the actual heading, its only for show
-	health = 26  		#robot can only move 25 places so every move it looses a health point  
+	health = 25  		#Robot can only move 25 places so every move it looses a health point  
 	fitval = 0 		#Robot Fitness
 	sens = [0,0,0,0,0] 	#[left, leftd, fwd, rightd, right]
 	dsens = 0 		#Denary Sensor Values
 	cwarn = 0 		#Crash Warning Flag
-	brain = []
+	genome = []
 
 	
 
@@ -80,7 +99,7 @@ class Population:
 	genome = [] 		#all the genome's of the population
 	genlen = 64		#length of the genome	
 	fitness = [] 		#the fitness's of all the population
-	
+	mutrate = 30
 
 #+++++++++++++++++INITIALISATION STUFF+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -92,13 +111,13 @@ def Init_Maze():
 	Maze.nmaze = numpy.array(Master_Maze) #make a numpy maze
 	print "Initialised Maze"
 
-#--------------INIT ROBOT----------------------------------------------------------------------
+#--------------INIT Robot----------------------------------------------------------------------
 #
-#Initalise the robot, start in the start position headin east, and load in a genome from the population
+#Initalise the Robot, start in the start position headin east, and load in a genome from the population
 #
 def Init_Robot():
-	Robot.x = 2 		# The row				N(0)
-	Robot.y = 1 		# The column				|
+	Robot.x = 2 		# The start row				N(0)
+	Robot.y = 1 		# The start column			|
 	Robot.heading = 1 	# Start Facing East		  W(3)--0--E(1)
 	Robot.fitval = 0	# Fitness				|
 	#Robot.brain = the current genome in the population		S(2)
@@ -124,36 +143,66 @@ def Init_Population():
 
 #---------------FORMAT HEADING FUNCTION----------------------------------------------------------------
 #
-#Just easier to debug, change the heading of the robot into something meaningful for printing
+#Just easier to debug, change the heading of the Robot into something meaningful for printing
 #By passing the new heading format into a new variable, saving the actual maze data
 #
 def Format_Heading():
 	if Robot.heading == 0: #North
-		Robot.mhead = '^'
+		Robot.format_head = '^'
 	elif Robot.heading == 1: #East
-		Robot.mhead = '>'
+		Robot.format_head = '>'
 	elif Robot.heading == 2: #South
-		Robot.mhead = 'v'
+		Robot.format_head = 'v'
 	elif Robot.heading == 3: #West
-		Robot.mhead = '<'
+		Robot.format_head = '<'
 
 #---------------DELETE TILE FUNCTION-------------------------------------------------------------------
 #
-#Check to see if the robot is on a tile, if it is, delete the tile. if this isn't done then the robot could 
+#Check to see if the Robot is on a tile, if it is, delete the tile. if this isn't done then the Robot could 
 #run over the same tile twice and count that as a fitness step, also it looks better
 #
 def Del_Tile():
-	if Maze.maze[Robot.x][Robot.y] == 1:
-		Maze.maze[Robot.x][Robot.y] = 0 #if robot has passed through a tile == 1 then make it 3 to show its path
+	if Maze.nmaze[Robot.x][Robot.y] == 1:
+		Maze.nmaze[Robot.x][Robot.y] = 0 #if Robot has passed through a tile == 1 then make it 3 to show its path
 
-#---------------ROBOT FITNESS FUNCTION-------------------------------------------------------------------
+#---------------Robot FITNESS FUNCTION-------------------------------------------------------------------
 #
-#If the robot is on a tile then add 1 to its fitness
+#If the Robot is on a tile then add 1 to its fitness
 #
 def Robot_Fitness():
-	if Maze.maze[Robot.x][Robot.y] == 1: #if the robot is in a trail tile then add one to the fitness
-		Robot.fitness = Robot.fitness + 1
+	print "Maze val", Maze.maze[Robot.x][Robot.y]
+	print "robot fitness ", Robot.fitval
+	if Maze.nmaze[Robot.x][Robot.y] == 1: #if the Robot is in a trail tile then add one to the fitness		
+		Robot.fitval = Robot.fitval + 1
+		print "fitness added"
+	else:
+		pass
 
+#--------------BINARY TO DENARY CONVERTER------------------------------------------------------------------
+#
+#irritating hacky code to convert 2 binary bits into one denary value
+#
+def Bin_2_Den(binstr):
+	denstr = [] #denary string 
+	j = 0
+	k = 0
+	length = len(binstr)
+	for k in range(0,length,2):
+		j = k + 2
+		if binstr[k:j] == [0,0]:
+			denstr.append(0) # or 00
+
+		elif binstr[k:j] == [0,1]:
+			denstr.append(1) # or 01
+			
+		elif binstr[k:j] == [1,0]:
+			denstr.append(2) # or 10
+			
+		elif binstr[k:j] == [1,1]:
+			denstr.append(3) # or 11
+			
+		
+	return denstr #return the denary string
 
 #--------------GENERATE GENOME FUNCTION-------------------------------------------------------------------
 #
@@ -165,22 +214,250 @@ def Gen_Genome(size):
 		table.append(random.randint(0,1))#append random value at the end of table
 	return table #return a single bit pattern, size large
 
+#-------------GET SENSOR DATA-----------------------------------------------------------------------------
+#
+#
+def Get_Sensors(): 
+	x = Robot.x
+	minusx = x - 1
+	plusx = x + 1
+	
+	y = Robot.y
+	minusy = y - 1
+	plusy = y + 1
 
-def Get_Sensors(x,y,th): #pass in the robots x, y and theta(heading)
-	pass
+	MwrapX = x - 8
+	PwrapX = x + 8
+	MwrapY = y - 7
+	PwrapY = y + 7
+	
+	#+++++++++++NORTH HEADING+++++++++++++++++++++++++++++++++++	
+	if Robot.heading == 0: #North
+		Robot.sens[0] = Maze.nmaze[x	,	minusy	]	#Left Sensor
+		Robot.sens[1] = Maze.nmaze[minusx,	minusy	]	#Left Diagonal Sensor
+		Robot.sens[2] = Maze.nmaze[minusx,	y	]	#Forward Sensor
+		Robot.sens[3] = Maze.nmaze[minusx,	plusy	]	#Right Diagonal Sensor
+		Robot.sens[4] = Maze.nmaze[x	,	plusy 	]	#Right Sensor Sensor
+	#++++++++++EAST HEADING+++++++++++++++++++++++++++++++++++++
+	elif Robot.heading == 1: # East
+		Robot.sens[0] = Maze.nmaze[minusx,	y	]
+		Robot.sens[1] = Maze.nmaze[minusx,	plusy	]
+		Robot.sens[2] = Maze.nmaze[x	,	plusy	]
+		Robot.sens[3] = Maze.nmaze[plusx, 	plusy	]
+		Robot.sens[4] = Maze.nmaze[plusx,	y	]
+	#++++++++++SOUTH HEADING+++++++++++++++++++++++++++++++++++++
+	elif Robot.heading == 2: # South
+		Robot.sens[0] = Maze.nmaze[x	,	plusy	]
+		Robot.sens[1] = Maze.nmaze[plusx,	plusy	]
+		Robot.sens[2] = Maze.nmaze[plusx,	y	]
+		Robot.sens[3] = Maze.nmaze[plusx,	plusy	]
+		Robot.sens[4] = Maze.nmaze[x	,	minusy	]
+	#++++++++++WEST HEADING+++++++++++++++++++++++++++++++++++++
+	elif Robot.heading == 3: #West
+		Robot.sens[0] = Maze.nmaze[plusx,	y	]
+		Robot.sens[1] = Maze.nmaze[plusx,	minusy	]
+		Robot.sens[2] = Maze.nmaze[x	,	minusy	]
+		Robot.sens[3] = Maze.nmaze[minusx,	minusy	]
+		Robot.sens[4] = Maze.nmaze[minusx,	y	]
+		
+	
+	#++++++++++++++++NORTH WRAPPING++++++++++++++++++++++++++++++
+	if Robot.heading == 0: #north
+		if Robot.sens[2] == 2: #if front is at a border 
+			Robot.sens[2] = Maze.nmaze[MwrapX , y]
+			Robot.cwarn = 1
+			print"north 2 in front"
 
+		if Robot.sens[0] == 2: #if left is at border
+			Robot.sens[0] = Maze.nmaze[x , PwrapY]
+	
+		if Robot.sens[4] == 2: #if right is at  border
+			Robot.sens[4] = Maze.nmaze[x , MwrapY]
+	
+	#++++++++++++++++EAST WRAPPING+++++++++++++++++++++++++++++	
+	elif Robot.heading == 1: #east
 
+		if Robot.sens[2] == 2: #front
+			Robot.sens[2] = Maze.nmaze[x , MwrapY]
+			Robot.cwarn = 1
+			print"east 2 in front"
+
+		if Robot.sens[0] == 2: #left is at border
+			Robot.sens[0] = Maze.nmaze[PwrapX , y]
+
+		if Robot.sens[4] == 2: #if right is at border
+			Robot.sens[4] = Maze.nmaze[MwrapX , y]
+
+	#+++++++++++++++SOUTH WRAPPING+++++++++++++++++++++++++++
+	elif Robot.heading == 2: #SOUTH
+		
+		if Robot.sens[2] == 2:
+			Robot.sens[2] = Maze.nmaze[MwrapX , y]
+			Robot.cwarn = 1
+			print"south 2 in front"
+		if Robot.sens[0] == 2:
+			Robot.sens[0] = Maze.nmaze[x , MwrapY]
+
+		if Robot.sens[4] == 2:
+			Robot.sens[4] = Maze.nmaze[x , PwrapY]
+
+	#+++++++++++++++WEST WRAPPING++++++++++++++++++++++++++
+	elif Robot.heading == 3: #WEST
+
+		if Robot.sens[2] == 2:
+			Robot.sens[2] = Maze.nmaze[x , PwrapY]
+			Robot.cwarn = 1
+			print"west 2 in front"
+		if Robot.sens[0] == 2:
+			Robot.sens[0] = Maze.nmaze[MwrapX , y]
+
+		if Robot.sens[4] == 2:
+			Robot.sens[4] = Maze.nmaze[PwrapX , y]
+	
+
+	#++++++++For now always make the diagonal sensors = 0++++++++++++++++
+	Robot.sens[1] = 0
+	Robot.sens[3] = 0
+	
+	#++++++++Convert the sensor data into a single denary value++++++++++
+	dsens = 0
+	x1 = 0
+	for x in Robot.sens[:]:
+		dsens = dsens + x * pow(2, x1)
+		x1 = x1+1
+	Robot.dsens = dsens #pass dsens to the Robot class
+	#print "dsens in sensors ", Robot.dsens
+	#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
+	print "Got Sensors"
+
+#-----------LOAD NEW GENOME----------------------------------------------------------
+#
+#Load a new genome into the robot for simulation
+#
+def Robot_Load(num): 
+	Robot.genome = Population.genome[num]
+	print "loaded a genome into the robot"
+
+#-----------ROBOT ACTION SELECTOR------------------------------------------------------------
+#
+#Pick an action from the genome using the sensor data, drive the robot accordingly
+#
+def Robot_Action():
+	#take in the denary sensor value, go to that index number in the genome, do that action
+	#the genome is in binary, so first convert from 64 bit binary to 32 possible actions
+	#i know i know, ineffcient...sue me
+	acttab = []
+	action = 0
+	print "Robot Binary Sensor Valuse ",Robot.sens
+	print "Robot Denary Sensor Value ",Robot.dsens
+	acttab = Bin_2_Den(Robot.genome)
+	action = acttab[Robot.dsens]
+	print "Action Selected = ", action
+	
+	#now we have an action selected, drive the robot
+	#+++++++++++++++++STATE MACHINE ACTION SELECTOR++++++++++++++++++++++++++++++++++++++++++++
+	if action == 0:
+		pass #do nothing
+	if action == 1: #Turn Right
+		if Robot.heading == 0: 			#Heading at North, make your heading East
+			Robot.heading = 1	
+		elif Robot.heading == 1: 		#heading at East, make your heading South						
+			Robot.heading = 2 			
+		elif Robot.heading == 2: 		#heading at South, make your heading West
+			Robot.heading = 3
+		elif Robot.heading == 3: 		#heading at West, make your heading North
+			Robot.heading = 0			
+	if action == 2: #Turn Left
+		if Robot.heading == 0: 			#Heading at North, make your heading West
+			Robot.heading = 3
+		elif Robot.heading == 1: 		#Heading at East, make your heading North
+			Robot.heading = 0
+		elif Robot.heading == 2: 		#Heading at South, make your heading East
+			Robot.heading = 1
+		elif Robot.heading == 3:		#Heading at West, make your heading South
+			Robot.heading = 2
+
+	if action == 3: #Go Forward 
+		if Robot.heading == 0: #heading north
+			if Robot.cwarn == 1: #crash warning raised
+				Robot.x = Robot.x + 7 #your at a border dont drive into that, so wrap to top of maze
+				Robot.cwarn = 0 #reset crash flag
+			else: 
+				Robot.x = Robot.x - 1						     
+
+		elif Robot.heading == 1: #heading east								
+			if Robot.cwarn == 1:
+				Robot.y = Robot.y - 7
+				Robot.cwarn = 0			
+			else:
+				Robot.y = Robot.y + 1							
+		
+		elif Robot.heading == 2: #heading south
+			if Robot.cwarn == 1:
+				Robot.x = Robot.x - 7
+				Robot.cwarn = 0							
+			else:
+				Robot.x = Robot.x + 1		
+							
+		elif Robot.heading == 3: #heading west
+			if Robot.cwarn == 1:
+				Robot.cwarn = 0
+				Robot.y = Robot.y + 7							
+			else:
+				Robot.y = Robot.y - 1
+		Robot_Fitness()	
+		Robot.cwarn = 0
+		Del_Tile()#delete the tile your on so you dont count its fitness more than once
+	print "FSM - One Pass"
+
+#----------------MUTATION------------------------------------------------------------------------
+#
+#Perform bitwise XOR on some bits to mutate the genome
+#
+def Genome_Mutation(gen):
+	bit = random.randint(0,63)
+	i = random.randint(0,100)
+	if i < Population.mutrate:
+		print "Mutatiing at bit ", bit
+		if gen[bit] == 0:
+			gen[bit] = 1
+		elif gen[bit] == 1:
+			gen[bit] = 0
+	return gen
+
+#-------------PRINT THE ENTIRE POPULATION-----------------------------------------------------
+#
+#Just for debugging, print the population, nicely formatted
+#
+def Print_Genome():
+	i = 0
+	for i in range (Population.size):
+		print "Genome Number", i, #"is ", len(Population.genome[i]), "bits long"	
+		print Population.genome[i]
+		i = i + 1
 #++++++++++++++++MAIN+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Init_Maze()
 Init_Robot()
 Init_Population()	
+#Print_Genome()
 
-i = 0
-for i in range (Population.size):
-	print "Genome Number", i, "is ", len(Population.genome[i]), "bits long"	
-	print Population.genome[i]
-	i = i + 1
+Robot_Load(1)
+while Robot.fitval < 19:
+	
+	for life in range(Robot.health):
+		Get_Sensors()
+		Robot_Action()
+		Format_Heading()
+		maze2 = copy.deepcopy(Maze.maze) #this is just for formating
+		maze2[Robot.x][Robot.y] = Robot.format_head #format heading
+		pp.pprint(maze2)
+		print "Robot Fitness ", Robot.fitval
 
+	Filewrite_Fitness()#save the fitness from this robot	
+	#print "Old Genome ", Robot.genome
+	Genome_Mutation(Robot.genome) #mutate the genome your using
+		
+	#print "New Genome ", Robot.genome
 #pp.pprint (Maze.maze)
 #print Maze.nmaze
 
