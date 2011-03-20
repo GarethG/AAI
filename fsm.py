@@ -570,7 +570,7 @@ def Finite_State_Machine():
 		
 		#Del_Tile()
 		#print "Old Genome ", Robot.genome
-		Genome_Mutation(Robot.genome) #mutate the genome your using
+		#Genome_Mutation(Robot.genome) #mutate the genome your using
 		Init_Robot() #done an iteration so reset the robot
 		Init_Maze() #done an iteration so reset the maze
 		Population.generation =  Population.generation + 1
