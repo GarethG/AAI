@@ -23,8 +23,25 @@ title('Rolling Fitness')
 grid(True)
 
 
+print "Reading in from the Pipes"
+fitness = open('/tmp/fsmfitness').read()
+generation = open('/tmp/fsmgeneration').read()
+if generation == '':
+	while generation != '':
+		generation = open('/tmp/fsmgeneration').read()
 
+print "Converting from String to Ints"
+fitness = int(fitness)
+generation = int(generation)
+
+print "Plotting"
+plot( generation, fitness,linewidth=1.0)
+show() #use draw instead
+
+	
+iteration = 0
 while fitness < 19:
+	print "begin loop"
 	print "Reading in from the Pipes"
 	fitness = open('/tmp/fsmfitness').read()
 	generation = open('/tmp/fsmgeneration').read()
@@ -35,9 +52,10 @@ while fitness < 19:
 	print "Converting from String to Ints"
 	fitness = int(fitness)
 	generation = int(generation)
-	
+	print "Iteration ", iteration
+	iteration = iteration + 1
 	print "Plotting"
 	plot( generation, fitness,linewidth=1.0)
-	show()
+	draw() #use draw instead
 	time.sleep(5)
-	show(False)
+	

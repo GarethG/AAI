@@ -20,6 +20,9 @@ numpy.set_printoptions(threshold=sys.maxint) #numpy likes to print large arrays 
 #+++++++++++++++++++++File input args+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
 fitness = open('./data/fitness.txt','a') #opens bestfit file, arg 'a' opens the file for appending data
 genome = open('./data/genome.txt','a')
+tourgen = open('./data/tourgen.txt','a')
+tourfit = open('./data/tourfit.txt','a')
+
 
 #++++++++++++++++WRITE TO FILE+++++++++++++++++++++++++++++++++++++++++++++++++++
 def Filewrite_Fitness():
@@ -34,6 +37,19 @@ def Filewrite_Genome(): #write the whole genome to a file
 		gen = str(gen)
 		genome.write(gen)
 		genome.write(' \n')
+
+def Filewrite_Tourgen():
+	for i in range(Population.size):
+		gen = Population.tourn[i]
+		gen = str(gen)
+		tourgen.write(gen)
+		tourgen.write(' \n')
+
+def Filewrite_Tourfit():
+	fit = Robot.fitval
+	fit = str(fit)	
+	tourfit.write (fit)
+	tourfit.write(' \n')
 
 #+++++++++++++++WRITE TO THE PIPES!!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #Write into pipes in linux (not sure if this will work in windows), read this using another 
@@ -252,7 +268,14 @@ def Tournament_Sel():
 		can1 = random.randint(0,Population.size) #Candidate 2 index
 		can2 = random.randint(0,Population.size) #Candidate 3 index
 		canlist = [can0, can1, can2]	
+		
+		print "--------TOURNAMENT SELECTION-------------------------------------"
+		print "Candidate 0 ", can0 , "Has a fitness of ", Population.fitness[can0]
+		print "Candidate 1 ", can1 , "Has a fitness of ", Population.fitness[can1]
+		print "Candidate 2 ", can2 , "Has a fitness of ", Population.fitness[can2]
+		print "Candidates in a list ",canlist
 
+		print "----------------------------------------------------------------"
 		canfit = [Population.fitness[can0] , Population.fitness[can1] , Population.fitness[can2]] #candidate fitness
 		best = max(canfit) #highest fitness in canfit
 		bestind = canfit.index(best) #index of the fitest
@@ -269,10 +292,12 @@ def Tournament_Sel():
 	if oldfit > newfit:
 		Population.tournfit = 0 #effectively do nothing, dont do anything to the actual population
 		Population.tourn = 0
+		print "tournament didnt work kill the children!"
 
 	if oldfit < newfit:
 		Population.fitness = Population.tournfit #tournament selection succeeded, overwrite old genome with new
 		Population.genome = Population.tourn	
+		print "tournament did work kill the parents!"
 
 #-------------GET SENSOR DATA-----------------------------------------------------------------------------GET SENSOR DATA
 #
@@ -552,6 +577,7 @@ def Finite_State_Machine():
 		Population.fitness.insert(Robot.fitval, test) #save this iterations fitness into the population class
 		Pipe_Write_Fitness()
 		Filewrite_Fitness() #save the fitness from this robot	
+		
 		print "Done an iteration"
 		print '\n'
 		print '\n'
@@ -567,13 +593,17 @@ def Finite_State_Machine():
 		print '\n'
 		print '\n'
 		#time.sleep(2)
-		
+	Tournament_Sel()#Tournament Selection
+	#Crossover
+	for i in range(Population.size):
+		print "Mutating genome number ",i
+		Population.genome[i] = Genome_Mutation(Population.genome[i])#Iterate through the population and mutate one bit
 		#Del_Tile()
 		#print "Old Genome ", Robot.genome
 		#Genome_Mutation(Robot.genome) #mutate the genome your using
 		Init_Robot() #done an iteration so reset the robot
 		Init_Maze() #done an iteration so reset the maze
-		Population.generation =  Population.generation + 1
+		Population.generation =  Population.generation + 1 #master generation count 
 		Pipe_Write_Generation()
 		
 		
