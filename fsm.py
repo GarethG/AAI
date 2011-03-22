@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+from __future__ import division
 #Advances in Artificial Intelligence - Coursework 1 Version 2.0
 
 #The Finite State Machine
@@ -15,6 +15,8 @@ import copy
 import time
 import pipes
 
+
+random.seed()
 numpy.set_printoptions(threshold=sys.maxint) #numpy likes to print large arrays wierd, supress this
 
 #+++++++++++++++++++++File input args+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
@@ -136,7 +138,7 @@ class Population:
 	genome = [] 		#all the genome's of the population
 	genlen = 64		#length of the genome	
 	fitness = [] 		#the fitness's of all the population
-	mutrate = 70
+	mutrate = 35
 	generation = 0
 	tourn = []
 	tournfit = []
@@ -344,6 +346,63 @@ def Tournament_Sel():
 	
 	oldfit = 0
 	newfit = 0
+	
+def Roulette_Sel():
+	r1 = 0 #roulette candidate
+	r1id = 0 #candidates index in the table, so it can be referenced if it gets choosen
+	r2 = 0
+	r2id = 0
+	r3 = 0
+	r3id = 0
+	winpick = 0
+	roulette = []
+	print "Roulette Wheel Selection"
+	for i in range(Population.size):
+		can0 = random.randint(0,Population.size - 1) #Candidate 1 index, can be used to access the fitness and the genome
+		can1 = random.randint(0,Population.size - 1) #Candidate 2 index
+		can2 = random.randint(0,Population.size - 1) #Candidate 3 index
+		canlist = [can0, can1, can2]	
+		canfit = [Population.fitness[can0] , Population.fitness[can1] , Population.fitness[can2]] #candidate fitness
+	
+		r1 = min(canfit) #the lowest fitness
+		r1id = canfit.index(r1) #index of the lowest
+		print "r1 is ",r1,"genome no",Population.genome.index(Population.genome[canlist[r1id]])
+		
+		r2 = numpy.median(canfit)
+		r2 = int(r2)	#numpy returns a float, convert to int
+		r2id = canfit.index(r2)
+		print "r2 is ", r2,"genome", Population.genome.index(Population.genome[canlist[r2id]])
+	
+		r3 = max(canfit)
+		r3id = canfit.index(r3)
+		print "r3 is ", r3,"genome", Population.genome.index(Population.genome[canlist[r3id]])		
+	
+		r1 = r1/100 
+		r1 = r1 * 360 #convert to a pie chart, not technically a roulette wheel, but in my opinion, close enough 
+		
+		r2 = r2/100
+		r2 = r2 * 360
+
+		r3 = r3/100
+		r3 = r3 * 360
+		print "|r1",r1 ,"|r2",r2 ,"|r3",r3
+		winpick = random.randint(0,359)
+		print "winpick", winpick
+		
+		if winpick in range(0, r1):
+			print "the lowest fitness won"
+			roulette.append(Population.genome[can0]) #into new population
+		elif winpick in range(r1, r2):
+			print "medium fitness won"
+			roulette.append(Population.genome[can1])
+		elif winpick in range(r2, r3):
+			print "highest fitness won" 
+			roulette.append(Population.genome[can2])
+
+		print "roul in loop" , roulette
+	print "roulette", roulette
+	Population.genome = []
+	Population.genome = roulette # copy the roulette population into the general population
 	
 #-------------GET SENSOR DATA-----------------------------------------------------------------------------GET SENSOR DATA
 #
@@ -605,14 +664,34 @@ def Genome_Crossover():
 	for i in range(ncross):
 		cp = 35 #point to crossover the genomes
 		aind = random.randint(0,Population.size - 1) #choose a random index number
+		print "current pop size", len(Population.genome)		
+		print "aindex" , aind
 		bind = random.randint(0,Population.size - 1)		
 		a = Population.genome[aind] #the random genome
 		b = Population.genome[bind]
 		newa = a[:cp] + b[cp:] #slice the first part of a with the second part of b
 		newb = b[:cp] + a[cp:] #slice the first part of b with the second part of a 
 		Population.genome[aind] = newa #overwrite the old genomes with the new ones
-		Population.genome[bind] = newb		 
+		Population.genome[bind] = newb	
+
+def Uniform_Crossover():
+	for i in range(Population.size / 2, 2): #step in increments of 2
+		coin = 0
+		q = 0
+		w = 0
+		q = Population.genome[i]
+		w = Population.genome[i-1]
+		for j in range(Population.genlen):
+			coin = random.randint(0,100)
 		
+			if coin > 50:
+				q[j] = w[j] 
+			
+			if coin < 50:
+				w[j] = q[j]
+		
+		Population.genome[i] = q
+		Population.genome[i-1] = w
 #-------------PRINT THE ENTIRE POPULATION-----------------------------------------------------PRINT THE ENTIRE POPULATION
 #
 #Just for debugging, print the population, nicely formatted
@@ -723,8 +802,10 @@ e = 0
 while Population.winflag != 1:
 	Finite_State_Machine()
 	if Population.winflag == 0:
-		Tournament_Sel()#Tournament Selection
+		#Tournament_Sel()#Tournament Selection
+		Roulette_Sel()		
 		Genome_Crossover()#Crossover
+		Uniform_Crossover()		
 		for i in range(Population.size):
 			print "Mutating genome number ",i
 	
