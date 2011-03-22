@@ -347,7 +347,11 @@ def Tournament_Sel():
 	
 	oldfit = 0
 	newfit = 0
-	
+
+#--------------------ROULETTE WHEEL SELECTION---------------------------------------------------------------------------------------ROULETTE WHEEL SELECTION
+#
+#
+#	
 def Roulette_Sel():
 	r1 = 0 #roulette candidate
 	r1id = 0 #candidates index in the table, so it can be referenced if it gets choosen
@@ -676,6 +680,11 @@ def Genome_Crossover():
 		Population.genome[aind] = newa #overwrite the old genomes with the new ones
 		Population.genome[bind] = newb	
 
+#------------------UNIFORM CROSSOVER---------------------------------------------------------UNIFORM CROSSOVER
+#
+#toss a coin, swap bits with 2 genomes 
+#
+
 def Uniform_Crossover():
 	for i in range(Population.size / 2, 2): #step in increments of 2
 		coin = 0
@@ -805,10 +814,10 @@ gencount = 0
 while Population.winflag != 1:
 	Finite_State_Machine()
 	if Population.winflag == 0:
-		#Tournament_Sel()#Tournament Selection
-		Roulette_Sel()		
+		Tournament_Sel()#Tournament Selection
+		#Roulette_Sel()		
 		#Genome_Crossover()#Crossover
-		#Uniform_Crossover()	
+		Uniform_Crossover()	
 		#mutation vv	
 		for i in range(Population.size):
 			bit = random.randint(0,63)
