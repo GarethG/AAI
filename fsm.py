@@ -146,6 +146,7 @@ class Population:
 	winner = []
 	winfit = 0
 	winind = 0 #index of the winner to respect to the original genome
+	dispind = 0
 
 
 #+++++++++++++++++INITIALISATION STUFF+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -532,9 +533,10 @@ def Get_Sensors():
 #
 #Load a new genome into the robot for simulation
 #
-def Robot_Load(num): 
-	Robot.genome = Population.genome[num]
-	print "loaded a genome" , num," into the robot"
+def Robot_Load(num):
+	if num < Population.size: 
+		Robot.genome = Population.genome[num]
+		print "loaded a genome" , num," into the robot"
 
 #-----------ROBOT ACTION SELECTOR-----------------------------------------------------------------ROBOT ACTION SELECTOR
 #
@@ -743,6 +745,7 @@ def Finite_State_Machine():
 			print "winner found"
 			Population.winflag = 1
 			Population.winner = Population.genome[j]
+			Population.dispind = Population.genome.index(Population.winner)
 			Population.winfit = Population.fitness[j]
 			Population.winind = j
 		
@@ -791,40 +794,56 @@ Init_Robot()
 Init_Population()	
 #Print_Genome()
 
-i = 2
-l = Population.genome[i]
+#i = 2
+#l = Population.genome[i]
 #l[i]
-print Population.genome[i][2]
-print "main",l[i]
+#print Population.genome[i][2]
+#print "main",l[i]
 
-e = 0
-
+#e = 0
+gencount = 0 
 while Population.winflag != 1:
 	Finite_State_Machine()
 	if Population.winflag == 0:
 		#Tournament_Sel()#Tournament Selection
 		Roulette_Sel()		
-		Genome_Crossover()#Crossover
-		Uniform_Crossover()		
+		#Genome_Crossover()#Crossover
+		#Uniform_Crossover()	
+		#mutation vv	
 		for i in range(Population.size):
-			print "Mutating genome number ",i
+			bit = random.randint(0,63)
+			j = random.randint(0,100)
+			if j > Population.mutrate:
+				print "Mutating genome number ",i
+				a = Population.genome[i][bit]
+				print "old a ",a
+				if a == 1:
+					a = 0
+				elif a == 0:
+					a = 1
+				Population.genome[i][bit] = a		
+				print "new a ", a 
+		gencount = gencount + 1		
 	
-			if random.randint(0,99) > Population.mutrate:
-				e = 0
-				e = random.randint(0,63)
-				print "befor ", Population.genome[i][e]	
-				Population.genome[i][e] ^ Population.genome[i][e] 
-				print "after ", Population.genome[i][e]				
+			#if random.randint(0,99) > Population.mutrate:
+			#	e = 0
+			#	e = random.randint(0,63)
+			#	print "befor ", Population.genome[i][e]	
+			#	Population.genome[i][e] ^ Population.genome[i][e] 
+			#	print "after ", Population.genome[i][e]				
 				#c = Population.genome[i]
 				#print "c = ", c[i]
 				#print "pop at i ", Population.genome[i][2]
 				#c[i] ^ c[i]
 				#Population.genome[i] = c	
 				#Population.genome[i] ^ Population.genome[i]#Genome_Mutation(Population.genome[i])#Iterate through the population and mutate one bit
-			print "after ", Population.genome[i][e]
+			#print "after ", Population.genome[i][e]
 	Population.fitness = []
 Playback(Population.winner)
 print "Done"
+print "This simulation took ", gencount ," times"
+print "Genome index in the population", Population.dispind
+print Population.winner
 
 
 
