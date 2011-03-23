@@ -55,7 +55,28 @@ class Robot:
 	cwarn = 0 		#Crash Warning Flag
 	genome = []
 
-	
+class Neuron1:
+	weight = []
+	val = 0
+	outweight = 0
+		
+class Neuron2:
+	weight = []
+	val = 0
+	outweight = 0
+
+class Neuron3:
+	weight = []
+	val = 0
+	outweight = 0 
+
+class OutNeu1:
+	weight = []
+	val = 0
+
+class OutNeu2:
+	weight = []
+	val = 0
 #+++++++++++++++++INITIALISATION STUFF+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #--------------INIT MAZE------------------------------------------------------------------------------------INIT MAZE
@@ -77,6 +98,21 @@ def Init_Robot():
 	Robot.fitval = 0	# Fitness				|
 	#Robot.brain = the current genome in the population		S(2)
 	print "Robot Initialised"
+
+def Init_Neurons():
+	#there will be 3 weights per neuron for each sensor
+	#generate initial weights for the input layer
+	for i in range(0,3):
+		Neuron1.weight.append(random.random())
+		Neuron2.weight.append(random.random())
+		Neuron3.weight.append(random.random())
+	print "Neuron 1",Neuron1.weight
+	print "Neuron 1",Neuron2.weight
+	print "Neuron 1",Neuron3.weight
+
+	Neuron1.outweight = random.random()
+	Neuron2.outweight = random.random()
+	Neuron3.outweight = random.random()		
 
 
 #---------------FORMAT HEADING FUNCTION----------------------------------------------------------------FORMAT HEADING FUNCTION
@@ -117,7 +153,6 @@ def Robot_Fitness():
 		
 	else:
 		pass
-
 
 #-------------GET SENSOR DATA-----------------------------------------------------------------------------GET SENSOR DATA
 #
@@ -232,4 +267,43 @@ def Get_Sensors():
 	#print "dsens in sensors ", Robot.dsens
 	#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
 	#print "Got Sensors"
+
+
+#------------------------MAIN----------------------------------------------------------------------MAIN
+Init_Maze()
+Init_Robot()
+Init_Neurons()
+
+Get_Sensors()
+Neuron1.val = (Robot.sens[0] * Neuron1.weight[0]) + (Robot.sens[2] * Neuron1.weight[1]) + (Robot.sens[4] * Neuron1.weight[2])
+Neuron2.val = (Robot.sens[0] * Neuron2.weight[0]) + (Robot.sens[2] * Neuron2.weight[1]) + (Robot.sens[4] * Neuron2.weight[2])
+Neuron3.val = (Robot.sens[0] * Neuron3.weight[0]) + (Robot.sens[2] * Neuron3.weight[1]) + (Robot.sens[4] * Neuron3.weight[2])
+
+print"1 = ", Neuron1.val
+print"2 = ", Neuron2.val
+print"3 = ", Neuron3.val
+
+#if a neuron is over the firerate then output its value to the output neurons
+
+OutNeu1.val = (Neuron1.val * OutNeu1.weight[0])# + (Neuron2.val * OutNeu1.weight[1]) + (Neuron3.val * OutNeu1.weight[2])
+
+# if the value of the output neuron is above the firerate then normalise to 1 or 0 and output to drive
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
