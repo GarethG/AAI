@@ -420,7 +420,7 @@ def Mutation(val):
 	b = random.randint(0,1)
 	if b == 0:
 		a = random.random()
-		a = a/10	
+		a = a/10
 		outval = val + a
 	elif b == 1:
 		a = random.random()
@@ -435,7 +435,7 @@ def Mutation(val):
 Init_Maze()
 Init_Robot()
 Init_Neurons()
-
+count = 0
 while Robot.finflag == 0:
 	Init_Maze()
 	Init_Robot()	
@@ -447,8 +447,8 @@ while Robot.finflag == 0:
 	if Robot.oldfit > Robot.fitval:
 		#old fitness is better throw out the new weights, they suck
 		Neuron1.weight = Neuron1.oldw
-		Neuron1.weight = Neuron1.oldw
-		Neuron1.weight = Neuron1.oldw
+		Neuron2.weight = Neuron2.oldw
+		Neuron3.weight = Neuron3.oldw
 
 	elif Robot.fitval < Robot.oldfit:
 		pass	#keep the new weights, they rule
@@ -459,10 +459,13 @@ while Robot.finflag == 0:
 		print "val" , Neuron1.weight[i]
 		Neuron1.weight[i] = Mutation(Neuron1.weight[i])
 		print "outval" , Neuron1.weight[i]
-
 	
-
-
+	count = count + 1
+	if count == 1000:
+		print "current fitness ", Robot.fitval
+		print "old fitness", Robot.oldfit
+		count = 0
+		time.sleep(10)
 
 
 
